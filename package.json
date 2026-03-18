@@ -1,0 +1,18 @@
+{
+  "name": "clawdbet-monorepo",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:frontend": "npm run dev -w packages/frontend",
+    "dev:backend": "npm run start:dev -w packages/backend",
+    "build:frontend": "npm run build -w packages/frontend",
+    "build:backend": "npm run build -w packages/backend",
+    "build": "npm run build:backend && npm run build:frontend",
+    "lint:frontend": "npm run lint -w packages/frontend",
+    "lint:backend": "npm run lint -w packages/backend",
+    "test:backend": "npm run test -w packages/backend"
+  }
+}
