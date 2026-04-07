@@ -8,6 +8,13 @@ import {
   PortfolioResponse,
   TokenSearchResult,
   WalletAnalysis,
+  CreateLimitOrderRequest,
+  LimitOrderResponse,
+  AirdropCheckRequest,
+  AirdropClaimRequest,
+  AirdropResponse,
+  PnLReportRequest,
+  PnLReportResponse,
 } from './heyelsa.types';
 
 const DEFAULT_API_URL = 'https://x402-api.heyelsa.ai/api';
@@ -44,10 +51,12 @@ export class HeyElsaService {
   /** Get a swap quote for a token pair. Cost: ~$0.01 per call. */
   async getSwapQuote(req: SwapQuoteRequest): Promise<SwapQuoteResponse> {
     return this.call<SwapQuoteResponse>('get_swap_quote', {
+      from_chain: req.fromChain ?? 8453,
+      to_chain: req.toChain ?? 8453,
       from_token: req.fromToken,
       to_token: req.toToken,
-      amount: req.amount,
-      chain_id: req.chainId ?? 8453, // Default to Base
+      from_amount: req.amount,
+      wallet_address: req.walletAddress,
       slippage: req.slippage ?? 0.5,
     });
   }
@@ -55,22 +64,24 @@ export class HeyElsaService {
   /** Get portfolio balances for a wallet across chains. Cost: ~$0.01 per call. */
   async getPortfolio(req: PortfolioRequest): Promise<PortfolioResponse> {
     return this.call<PortfolioResponse>('get_portfolio', {
-      evm_address: req.evmAddress,
+      wallet_address: req.evmAddress,
       chains: req.chains,
+      include_spam: req.includeSpam ?? false,
+      include_nfts: req.includeNfts ?? false,
     });
   }
 
   /** Get token balances for a wallet. Cost: ~$0.005 per call. */
   async getBalances(evmAddress: string): Promise<PortfolioResponse> {
     return this.call<PortfolioResponse>('get_balances', {
-      evm_address: evmAddress,
+      wallet_address: evmAddress,
     });
   }
 
   /** Search for tokens by name or symbol. Cost: ~$0.002 per call. */
-  async searchTokens(query: string, chainId?: number, limit?: number): Promise<TokenSearchResult[]> {
-    const result = await this.call<{ tokens: TokenSearchResult[] }>('search_tokens', {
-      query,
+  async searchToken(query: string, chainId?: number, limit?: number): Promise<TokenSearchResult[]> {
+    const result = await this.call<{ tokens: TokenSearchResult[] }>('search_token', {
+      symbol_or_address: query,
       chain_id: chainId,
       limit: limit ?? 10,
     });
@@ -80,7 +91,7 @@ export class HeyElsaService {
   /** Analyze a wallet's holdings and DeFi positions. Cost: ~$0.01 per call. */
   async analyzeWallet(evmAddress: string): Promise<WalletAnalysis> {
     return this.call<WalletAnalysis>('analyze_wallet', {
-      evm_address: evmAddress,
+      wallet_address: evmAddress,
     });
   }
 
@@ -88,7 +99,75 @@ export class HeyElsaService {
   async getTokenPrice(tokenAddress: string, chainId: number = 8453): Promise<{ price: number; symbol: string }> {
     return this.call<{ price: number; symbol: string }>('get_token_price', {
       token_address: tokenAddress,
-      chain_id: chainId,
+      chain: chainId,
+    });
+  }
+
+  // ── New Endpoints (Limit Orders, Airdrops, Analytics) ──────────────
+
+  /** Create a new limit order. */
+  async createLimitOrder(req: CreateLimitOrderRequest): Promise<LimitOrderResponse> {
+    return this.call<LimitOrderResponse>('create_limit_order', {
+      from_chain: req.fromChain,
+      from_token: req.fromToken,
+      from_amount: req.fromAmount,
+      to_token: req.toToken,
+      limit_price: req.limitPrice,
+      wallet_address: req.walletAddress,
+      valid_for_hours: req.validForHours ?? 24,
+      dry_run: req.dryRun ?? this.config.dryRun,
+    });
+  }
+
+  /** Get active limit orders for a wallet. */
+  async getLimitOrders(walletAddress: string): Promise<LimitOrderResponse[]> {
+    const result = await this.call<{ orders: LimitOrderResponse[] }>('get_limit_orders', {
+      wallet_address: walletAddress,
+    });
+    return result.orders ?? [];
+  }
+
+  /** Cancel an active limit order. */
+  async cancelLimitOrder(orderId: string, walletAddress: string): Promise<{ status: string }> {
+    return this.call<{ status: string }>('cancel_limit_order', {
+      order_id: orderId,
+      wallet_address: walletAddress,
+      dry_run: this.config.dryRun,
+    });
+  }
+
+  /** Check eligibility for ELSA airdrop. */
+  async checkAirdrop(req: AirdropCheckRequest): Promise<AirdropResponse> {
+    return this.call<AirdropResponse>('check_airdrop', {
+      chain: req.chain,
+      tranche: req.tranche,
+      eoa_address: req.eoaAddress,
+    });
+  }
+
+  /** Claim ELSA airdrop tokens. */
+  async claimAirdrop(req: AirdropClaimRequest): Promise<AirdropResponse> {
+    return this.call<AirdropResponse>('claim_airdrop', {
+      chain: req.chain,
+      tranche: req.tranche,
+      eoa_address: req.eoaAddress,
+      dry_run: req.dryRun ?? this.config.dryRun,
+    });
+  }
+
+  /** Get PnL report for a wallet. */
+  async getPnLReport(req: PnLReportRequest): Promise<PnLReportResponse> {
+    return this.call<PnLReportResponse>('get_pnl_report', {
+      wallet_address: req.walletAddress,
+      time_period: req.timePeriod ?? 'all',
+    });
+  }
+
+  /** Get yield suggestions for a wallet. */
+  async getYieldSuggestions(walletAddress: string, riskTolerance: string = 'medium'): Promise<any> {
+    return this.call<any>('get_yield_suggestions', {
+      wallet_address: walletAddress,
+      risk_tolerance: riskTolerance,
     });
   }
 

@@ -1,11 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { ScrollReveal } from "./scroll-reveal";
+import { CreateMarketModal } from "./create-market-modal";
 import Image from "next/image";
 
 export function CTAFooter() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <>
+      <CreateMarketModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       {/* CTA Section */}
       <section className="relative py-24 md:py-32 lg:py-40 overflow-hidden">
         {/* Mesh gradient background */}
@@ -31,15 +36,13 @@ export function CTAFooter() {
           <ScrollReveal delay={0.1}>
             <p className="text-lg md:text-xl text-slate max-w-xl mx-auto leading-relaxed mb-10">
               Stop waiting for someone else to create the market you want. Ask
-              ClawdBet. Get your market. Start trading.
+              SigmaBet. Get your market. Start trading.
             </p>
           </ScrollReveal>
           <ScrollReveal delay={0.2}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href="https://moltlaunch.com/agents/"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => setIsModalOpen(true)}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-gradient-to-r from-base-blue to-cyan text-white text-base font-semibold rounded-full shadow-[0_0_30px_rgba(0,82,255,0.3)] hover:shadow-[0_0_50px_rgba(0,82,255,0.45)] transition-all duration-300 active:scale-[0.97]"
               >
                 Create a Prediction Market
@@ -52,7 +55,7 @@ export function CTAFooter() {
                     strokeLinejoin="round"
                   />
                 </svg>
-              </a>
+              </button>
               <a
                 href="https://flaunch.gg/base/coin/0x5178f9df8274d76841aadb13f22e0f7fa7f219a0"
                 target="_blank"
@@ -90,13 +93,13 @@ export function CTAFooter() {
               <div className="flex items-center gap-2.5 mb-4">
                 <Image
                   src="/logo.png"
-                  alt="ClawdBet"
+                  alt="SigmaBet"
                   width={28}
                   height={28}
                   className="rounded-lg"
                 />
                 <span className="font-display text-lg text-white">
-                  ClawdBet
+                  SigmaBet
                 </span>
               </div>
               <p className="text-sm leading-relaxed max-w-sm">
@@ -170,7 +173,7 @@ export function CTAFooter() {
           {/* Bottom bar */}
           <div className="pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-white/30">
-              &copy; 2026 ClawdBet. Built on Base.
+              &copy; 2026 SigmaBet. Built on Base.
             </p>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-1 rounded-md bg-white/[0.05] text-[10px] font-medium text-white/40">

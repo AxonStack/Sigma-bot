@@ -63,7 +63,7 @@ export function Problem() {
                   <p className="text-[11px] text-slate mt-2 font-semibold uppercase tracking-wider">
                     Markets you can
                     <br />
-                    create with ClawdBet
+                    create with SigmaBet
                   </p>
                 </div>
               </div>
@@ -128,7 +128,7 @@ export function Problem() {
                 </div>
               </div>
 
-              {/* ClawdBet state */}
+              {/* SigmaBet state */}
               <div className="relative group">
                 <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-base-blue/40 via-cyan/30 to-base-blue/20 opacity-60 group-hover:opacity-100 transition-opacity duration-500 blur-[1px]" />
                 <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-base-blue/30 via-cyan/20 to-base-blue/10" />
@@ -159,7 +159,7 @@ export function Problem() {
                     </div>
                     <div>
                       <p className="font-semibold text-navy text-sm mb-1">
-                        ClawdBet
+                        SigmaBet
                       </p>
                       <p className="text-slate text-sm leading-relaxed">
                         &ldquo;Will XYZ happen by March?&rdquo; &rarr; Market

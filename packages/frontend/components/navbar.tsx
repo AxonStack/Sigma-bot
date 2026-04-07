@@ -33,23 +33,22 @@ export function Navbar() {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled
-            ? "glass-strong border-b border-base-blue/[0.08] shadow-[0_4px_30px_rgba(0,82,255,0.04)]"
-            : "bg-transparent"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
+          ? "glass-strong border-b border-base-blue/[0.08] shadow-[0_4px_30px_rgba(0,82,255,0.04)]"
+          : "bg-transparent"
+          }`}
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 md:h-[72px] flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
             <Image
               src="/logo.png"
-              alt="ClawdBet"
+              alt="SigmaBet"
               width={34}
               height={34}
               className="rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
             />
             <span className="font-display text-xl text-navy tracking-tight">
-              ClawdBet
+              SigmaBet
             </span>
           </Link>
 
@@ -88,19 +87,16 @@ export function Navbar() {
           >
             <div className="w-5 flex flex-col gap-[5px]">
               <span
-                className={`h-[1.5px] w-full bg-navy rounded-full transition-all duration-300 origin-center ${
-                  mobileOpen ? "rotate-45 translate-y-[6.5px]" : ""
-                }`}
+                className={`h-[1.5px] w-full bg-navy rounded-full transition-all duration-300 origin-center ${mobileOpen ? "rotate-45 translate-y-[6.5px]" : ""
+                  }`}
               />
               <span
-                className={`h-[1.5px] w-full bg-navy rounded-full transition-all duration-300 ${
-                  mobileOpen ? "opacity-0 scale-x-0" : ""
-                }`}
+                className={`h-[1.5px] w-full bg-navy rounded-full transition-all duration-300 ${mobileOpen ? "opacity-0 scale-x-0" : ""
+                  }`}
               />
               <span
-                className={`h-[1.5px] w-full bg-navy rounded-full transition-all duration-300 origin-center ${
-                  mobileOpen ? "-rotate-45 -translate-y-[6.5px]" : ""
-                }`}
+                className={`h-[1.5px] w-full bg-navy rounded-full transition-all duration-300 origin-center ${mobileOpen ? "-rotate-45 -translate-y-[6.5px]" : ""
+                  }`}
               />
             </div>
           </button>

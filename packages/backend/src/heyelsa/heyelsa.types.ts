@@ -10,7 +10,9 @@ export interface SwapQuoteRequest {
   fromToken: string;
   toToken: string;
   amount: string;
-  chainId?: number;
+  fromChain?: number;
+  toChain?: number;
+  walletAddress?: string;
   slippage?: number;
 }
 
@@ -28,6 +30,8 @@ export interface SwapQuoteResponse {
 export interface PortfolioRequest {
   evmAddress: string;
   chains?: number[];
+  includeSpam?: boolean;
+  includeNfts?: boolean;
 }
 
 export interface PortfolioResponse {
@@ -75,4 +79,60 @@ export interface WalletAnalysis {
   activeChains: number;
   riskScore: string;
   topHoldings: TokenBalance[];
+}
+
+// ── Limit Orders ──────────────────────────────────────────────────
+
+export interface CreateLimitOrderRequest {
+  fromChain: number;
+  fromToken: string;
+  fromAmount: string;
+  toToken: string;
+  limitPrice: string;
+  walletAddress: string;
+  validForHours?: number;
+  dryRun?: boolean;
+}
+
+export interface LimitOrderResponse {
+  orderId: string;
+  status: string; // 'active', 'filled', 'cancelled'
+  fromToken: string;
+  toToken: string;
+  fromAmount: string;
+  limitPrice: string;
+}
+
+// ── Airdrops ──────────────────────────────────────────────────────
+
+export interface AirdropCheckRequest {
+  chain: number | string;
+  tranche: string;
+  eoaAddress: string;
+}
+
+export interface AirdropClaimRequest extends AirdropCheckRequest {
+  dryRun?: boolean;
+}
+
+export interface AirdropResponse {
+  eligible: boolean;
+  amount: string;
+  proof?: string[];
+  claimed: boolean;
+}
+
+// ── Analytics ─────────────────────────────────────────────────────
+
+export interface PnLReportRequest {
+  walletAddress: string;
+  timePeriod?: '24h' | '7d' | '30d' | 'all';
+}
+
+export interface PnLReportResponse {
+  walletAddress: string;
+  totalPnLUsd: number;
+  realizedPnLUsd: number;
+  unrealizedPnLUsd: number;
+  tradesCount: number;
 }

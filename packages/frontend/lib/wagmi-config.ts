@@ -1,6 +1,6 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { base } from "wagmi/chains";
-import { http } from "wagmi";
+import { baseSepolia } from "wagmi/chains";
+import { http, createStorage, cookieStorage } from "wagmi";
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
 if (!projectId?.trim()) {
@@ -12,9 +12,12 @@ if (!projectId?.trim()) {
 export const config = getDefaultConfig({
   appName: "ClawdBet",
   projectId,
-  chains: [base],
+  chains: [baseSepolia],
   ssr: true,
+  storage: createStorage({
+    storage: typeof window !== 'undefined' ? window.localStorage : cookieStorage,
+  }),
   transports: {
-    [base.id]: http("https://mainnet.base.org"),
+    [baseSepolia.id]: http(process.env.NEXT_PUBLIC_RPC_URL ?? "https://sepolia.base.org"),
   },
 });

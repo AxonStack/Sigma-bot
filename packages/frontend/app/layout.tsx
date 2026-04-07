@@ -24,11 +24,11 @@ const greatVibes = Great_Vibes({
 });
 
 export const metadata: Metadata = {
-  title: "ClawdBet — Instant Prediction Markets by AI",
+  title: "SigmaBet — Instant Prediction Markets by AI",
   description:
-    "Create any prediction market instantly with guaranteed liquidity. ClawdBet is an AI agent on Base that turns any question into a tradeable market backed by $CLAWDBET.",
+    "Create any prediction market instantly with guaranteed liquidity. SigmaBet is an AI agent on Base that turns any question into a tradeable market backed by $CLAWDBET.",
   openGraph: {
-    title: "ClawdBet — Instant Prediction Markets by AI",
+    title: "SigmaBet — Instant Prediction Markets by AI",
     description:
       "Create any prediction market instantly with guaranteed liquidity in $CLAWDBET.",
     type: "website",

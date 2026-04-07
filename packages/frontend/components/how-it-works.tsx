@@ -7,7 +7,7 @@ const steps = [
     number: "01",
     title: "Describe Your Market",
     description:
-      "Tell ClawdBet what you want to predict. Any question, any event, any outcome. Provide the question or context — the agent handles the rest.",
+      "Tell SigmaBet what you want to predict. Any question, any event, any outcome. Provide the question or context — the agent handles the rest.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
         <rect
@@ -32,7 +32,7 @@ const steps = [
     number: "02",
     title: "Agent Creates Onchain",
     description:
-      "ClawdBet deploys the prediction market as an onchain instrument on Base. Structured, resolved, and settled by the agent — fully autonomous.",
+      "SigmaBet deploys the prediction market as an onchain instrument on Base. Structured, resolved, and settled by the agent — fully autonomous.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
         <circle

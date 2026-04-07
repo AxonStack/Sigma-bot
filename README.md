@@ -1,4 +1,4 @@
-# ClawdBet Monorepo
+# SigmaBet Monorepo
 
 Prediction market platform — frontend + backend in a single monorepo.
 
@@ -33,7 +33,8 @@ npm run build          # builds both packages
 
 ## HeyElsa x402 Integration
 
-The backend includes pay-per-call DeFi API endpoints powered by [HeyElsa x402](https://x402.heyelsa.ai):
+The backend includes pay-per-call DeFi API endpoints powered by
+[HeyElsa x402](https://x402.heyelsa.ai):
 
 - `GET /heyelsa/quote` — Swap quotes across 20+ DEXs
 - `GET /heyelsa/portfolio/:address` — Multi-chain portfolio

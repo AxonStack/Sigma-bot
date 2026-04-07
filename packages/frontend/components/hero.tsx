@@ -1,11 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { FACTORY_ABI } from "@/lib/abi/abi";
+import { CreateMarketModal } from "./create-market-modal";
 
 export function Hero() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <CreateMarketModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       {/* Base gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-ice-deep via-ice to-white" />
 
@@ -68,7 +73,7 @@ export function Hero() {
             <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-base-blue/20 via-cyan/10 to-coral/10 blur-xl animate-pulse-ring" />
             <Image
               src="/logo.png"
-              alt="ClawdBet"
+              alt="SigmaBet"
               width={150}
               height={150}
               priority
@@ -115,7 +120,7 @@ export function Hero() {
           transition={{ delay: 0.5, duration: 0.6 }}
           className="text-lg md:text-xl text-slate max-w-2xl mx-auto mb-10 leading-relaxed"
         >
-          ClawdBet is an AI agent that creates prediction markets on demand
+          SigmaBet is an AI agent that creates prediction markets on demand
           &mdash; instantly tradeable with guaranteed liquidity in{" "}
           <span className="text-navy font-semibold">$CLAWDBET</span>. No
           gatekeepers. No approvals. No cold starts.
@@ -128,10 +133,8 @@ export function Hero() {
           transition={{ delay: 0.65, duration: 0.6 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4"
         >
-          <a
-            href="https://moltlaunch.com/agents/"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => setIsModalOpen(true)}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-gradient-to-r from-base-blue to-cyan text-white text-base font-semibold rounded-full shadow-[0_0_30px_rgba(0,82,255,0.3)] hover:shadow-[0_0_50px_rgba(0,82,255,0.45)] transition-all duration-300 active:scale-[0.97]"
           >
             Create a Prediction Market
@@ -144,7 +147,7 @@ export function Hero() {
                 strokeLinejoin="round"
               />
             </svg>
-          </a>
+          </button>
           <a
             href="https://flaunch.gg/base/coin/0x5178f9df8274d76841aadb13f22e0f7fa7f219a0"
             target="_blank"

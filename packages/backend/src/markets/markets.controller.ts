@@ -1,5 +1,7 @@
-import { Controller, Get, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
+import { MarketGenerationService } from './market-generation.service';
+import { MarketRelayerService } from './market-relayer.service';
 
 function toOddsPercent(raw: string | null): number {
   if (!raw || raw === '0') return 0;
@@ -8,7 +10,39 @@ function toOddsPercent(raw: string | null): number {
 
 @Controller()
 export class MarketsController {
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    private readonly supabase: SupabaseService,
+    private readonly generationService: MarketGenerationService,
+    private readonly relayerService: MarketRelayerService,
+  ) {}
+
+  @Post('markets/execute-creation')
+  async executeCreation(@Body() body: {
+    question: string;
+    description: string;
+    endTime: number;
+    initialLiquidity: string;
+    collateralToken: string;
+    userPaymentTxHash?: string;
+  }) {
+    return this.relayerService.executeMarketCreation(body);
+  }
+
+  @Post('markets/generate')
+  async generateMarket(@Body('prompt') prompt: string) {
+    if (!prompt) {
+      throw new NotFoundException('Prompt is required');
+    }
+    return this.generationService.generateFromPrompt(prompt);
+  }
+
+  @Post('markets/chat')
+  async diagnosticChat(@Body('prompt') prompt: string) {
+    if (!prompt) {
+      throw new NotFoundException('Prompt is required');
+    }
+    return { response: await this.generationService.chat(prompt) };
+  }
 
   @Get('markets')
   async getMarkets() {

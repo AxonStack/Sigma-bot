@@ -58,7 +58,7 @@ export function Flywheel() {
           </ScrollReveal>
           <ScrollReveal delay={0.2}>
             <p className="text-lg text-slate max-w-2xl mx-auto leading-relaxed">
-              When anyone hires ClawdBet, the payment doesn&apos;t go to a
+              When anyone hires SigmaBet, the payment doesn&apos;t go to a
               wallet &mdash; it buys back and permanently burns $CLAWDBET
               supply. More markets created means less tokens in circulation.
               Forever.
@@ -117,7 +117,7 @@ export function Flywheel() {
                   <div className="relative w-20 h-20 rounded-2xl bg-white flex items-center justify-center shadow-xl shadow-base-blue/15 border border-base-blue/10">
                     <Image
                       src="/logo.png"
-                      alt="ClawdBet"
+                      alt="SigmaBet"
                       width={56}
                       height={56}
                       className="rounded-xl"

@@ -40,7 +40,7 @@ export function AgentIdentity() {
             </ScrollReveal>
             <ScrollReveal delay={0.2}>
               <p className="text-lg text-slate leading-relaxed mb-8">
-                ClawdBet is registered as an ERC-8004 agent on Base through
+                SigmaBet is registered as an ERC-8004 agent on Base through
                 moltlaunch. Every completed job builds permanent, onchain
                 reputation visible to all future clients. Payments are secured
                 through trustless escrow &mdash; no intermediaries, no trust
@@ -100,13 +100,13 @@ export function AgentIdentity() {
                       <div className="flex items-center gap-3">
                         <Image
                           src="/logo.png"
-                          alt="ClawdBet"
+                          alt="SigmaBet"
                           width={44}
                           height={44}
                           className="rounded-xl"
                         />
                         <div>
-                          <p className="font-display text-lg">ClawdBet</p>
+                          <p className="font-display text-lg">SigmaBet</p>
                           <p className="text-xs text-white/50">
                             Prediction Market Agent
                           </p>

@@ -107,7 +107,7 @@ export function WhyClawdBet() {
           </ScrollReveal>
           <ScrollReveal delay={0.2}>
             <p className="text-lg text-slate max-w-xl mx-auto leading-relaxed">
-              ClawdBet doesn&apos;t compete with prediction markets &mdash; it
+              SigmaBet doesn&apos;t compete with prediction markets &mdash; it
               creates the ones that never existed.
             </p>
           </ScrollReveal>
@@ -128,7 +128,7 @@ export function WhyClawdBet() {
                   </div>
                   <div className="text-center">
                     <span className="text-[11px] font-bold uppercase tracking-wider gradient-text">
-                      ClawdBet
+                      SigmaBet
                     </span>
                   </div>
                   <div className="text-center">
@@ -147,11 +147,10 @@ export function WhyClawdBet() {
                 {features.map((feature, i) => (
                   <div
                     key={feature.name}
-                    className={`grid grid-cols-4 gap-4 px-6 py-4 items-center transition-colors duration-200 hover:bg-base-blue/[0.02] ${
-                      i < features.length - 1
-                        ? "border-b border-navy/[0.04]"
-                        : ""
-                    } ${i % 2 === 1 ? "bg-white/40" : ""}`}
+                    className={`grid grid-cols-4 gap-4 px-6 py-4 items-center transition-colors duration-200 hover:bg-base-blue/[0.02] ${i < features.length - 1
+                      ? "border-b border-navy/[0.04]"
+                      : ""
+                      } ${i % 2 === 1 ? "bg-white/40" : ""}`}
                   >
                     <div className="col-span-1">
                       <span className="text-sm text-navy font-medium">
