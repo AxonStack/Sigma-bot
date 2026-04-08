@@ -72,7 +72,7 @@ export class MarketRelayerService {
       }
 
       // 4. Send Transaction (Backend Relayer)
-      const nonce = await relayerWallet.getNonce('pending');
+      const nonce = await relayerWallet.getNonce('latest');
       this.logger.log(`Using nonce: ${nonce} for market creation`);
 
       const tx = await factory.createPredictionMarket(
@@ -130,15 +130,18 @@ export class MarketRelayerService {
     const marketRow = {
       market_address: data.conditionId,
       question: data.question,
+      description: data.description,
       market_endTime: new Date(data.endTime * 1000).toISOString(),
       creator: data.creator,
       market_createdTime: new Date().toISOString(),
+      collateralToken: data.collateralToken,
       yes_token_supply: '0',
       no_token_supply: '0',
     };
 
-    // 1. Save to Supabase
+    // 1. Save to Supabase (Primary)
     try {
+      this.logger.log(`Inserting market ${data.conditionId} into Supabase...`);
       const { error } = await this.supabase
         .getClawdbetClient()
         .from(this.supabase.writeTable)

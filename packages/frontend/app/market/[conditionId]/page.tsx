@@ -212,8 +212,8 @@ export default function MarketPage() {
     ? formatEndTimeFromISO(market!.market_endTime)
     : null;
   const settled = endTimeFormatted?.ended ?? false;
-  const yesPercent = typeof market!.yes_odds === "number" ? market!.yes_odds : null;
-  const noPercent = typeof market!.no_odds === "number" ? market!.no_odds : null;
+  const yesPercent = (typeof market!.yes_odds === "number" && market!.yes_odds > 0) ? market!.yes_odds : 50;
+  const noPercent = (typeof market!.no_odds === "number" && market!.no_odds > 0) ? market!.no_odds : 50;
   const reserve = reserveFromContract as bigint | undefined;
 
   // ── Copy helpers ───────────────────────────────────────────────────────────

@@ -1,35 +1,35 @@
 [
   {
-    "market_address": "0xae0e7d0bb36b61b9e20edc8f12f4f106ba29da860b1d7cdcb22d409c068c30cd",
-    "question": "Will the official maximum recorded temperature at Bangalore HAL Airport (VOBL) exceed 36°C on April 9, 2026, as reported by the IMD?",
-    "market_endTime": "2026-04-09T10:40:00.000Z",
-    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
-    "market_createdTime": "2026-04-08T11:45:00.000Z",
-    "yes_token_supply": "0",
-    "no_token_supply": "0",
-    "description": "Prediction market based on official IMD weather reports for Bangalore HAL Airport.",
-    "collateralToken": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
-  },
-  {
-    "market_address": "0xfcd459ec965e8eed987d30965a0a5a9fad58206401e9f4f0be2ff403d919af4d",
+    "market_address": "0x3ef002963bf09e977907567a57ef1c1d4f4b4e07bafc4bb06beeb5600191d722",
     "question": "Will the total value locked (TVL) in Aerodrome Finance on Base be higher than $1.2 Billion at 10:00 AM UTC on April 9, 2026, according to DeFiLlama?",
-    "market_endTime": "2026-04-15T07:40:09.000Z",
+    "description": "This market seeks to determine if the TVL in Aerodrome Finance on the Base platform will exceed $1.2 Billion at the specified date and time. The source of verification for this data will be DeFiLlama.",
+    "market_endTime": "2026-04-10T07:20:00.000Z",
     "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
-    "market_createdTime": "2026-04-08T07:40:12.460Z",
-    "yes_token_supply": "0",
-    "no_token_supply": "0",
-    "description": "This market predicts whether the TVL in Aerodrome Finance on the Base blockchain will exceed $1.2 billion. Verification will be based on data available on DeFiLlama.",
-    "collateralToken": "0x7eaa021bf63f4cde1943431a69471f79ead7a8d5"
+    "market_createdTime": "2026-04-08T09:59:09.356Z",
+    "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
+    "yes_token_supply": "546568067362666663",
+    "no_token_supply": "453431932637333336"
   },
   {
-    "market_address": "0x2b47b29f2c7b70ad5c58ef7545a276adab40d20ea25236a08a6b0a8ab929a2b6",
-    "question": "Will Base daily transactions exceed 5 Million by the end of this week?",
-    "market_endTime": "2026-04-15T08:58:31.000Z",
+    "market_address": "0x57dd05851c6a24652d7347f3a8394faf6fd6ef6d7a89b02b6fabd35e4752c848",
+    "question": "Will Apple announce a new dedicated AI hardware device at their next Worldwide Developers Conference (WWDC)?",
+    "description": "This market predicts whether Apple will announce a new dedicated artificial intelligence hardware device during their upcoming WWDC event. A dedicated AI hardware device is defined as a new product primarily designed for AI processing tasks.",
+    "market_endTime": "2026-04-15T10:09:58.000Z",
     "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
-    "market_createdTime": "2026-04-08T08:58:34.849Z",
-    "yes_token_supply": "0",
-    "no_token_supply": "0",
-    "description": "This market seeks to determine if the daily transaction count on the Base network will exceed 5 million by the end of this week.",
-    "collateralToken": "0x7eaa021bf63f4cde1943431a69471f79ead7a8d5"
+    "market_createdTime": "2026-04-08T10:10:01.557Z",
+    "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
+    "yes_token_supply": "521775517847149459",
+    "no_token_supply": "478224482152850540"
+  },
+  {
+    "market_address": "0x2820030b43a87303de710a9cb2c87be3eda54dadac6c33d328e33a375d727249",
+    "question": "Will the Federal Reserve announce a decrease in interest rates (rate cut) at their next scheduled meeting?",
+    "description": "This market resolves to 'Yes' if the Federal Reserve announces a decrease in interest rates at their next scheduled meeting. Otherwise, it resolves to 'No'.",
+    "market_endTime": "2026-04-15T10:12:39.000Z",
+    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
+    "market_createdTime": "2026-04-08T10:12:42.259Z",
+    "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
+    "yes_token_supply": "500000000000000000",
+    "no_token_supply": "500000000000000000"
   }
 ]

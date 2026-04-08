@@ -2,15 +2,16 @@ import { Controller, Get, Post, Body, Param, NotFoundException } from '@nestjs/c
 import { SupabaseService } from '../supabase/supabase.service';
 import { MarketGenerationService } from './market-generation.service';
 import { MarketRelayerService } from './market-relayer.service';
+import { MarketPricesService } from '../market-sync/market-prices.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
 function toOddsPercent(raw: string | null): number {
-  if (!raw || raw === '0') return 0;
+  if (!raw || raw === '0') return 50;
   try {
     return Number((BigInt(raw) * 10000n / BigInt('1000000000000000000'))) / 100;
   } catch (e) {
-    return 0;
+    return 50;
   }
 }
 
@@ -22,6 +23,7 @@ export class MarketsController {
     private readonly supabase: SupabaseService,
     private readonly generationService: MarketGenerationService,
     private readonly relayerService: MarketRelayerService,
+    private readonly pricesService: MarketPricesService,
   ) {}
 
   @Post('markets/execute-creation')
@@ -50,6 +52,11 @@ export class MarketsController {
       throw new NotFoundException('Prompt is required');
     }
     return { response: await this.generationService.chat(prompt) };
+  }
+
+  @Get('markets/sync')
+  async manualSync() {
+    return this.pricesService.refreshPrices();
   }
 
   @Get('markets')
@@ -102,12 +109,29 @@ export class MarketsController {
 
   @Get('market/:conditionId')
   async getMarket(@Param('conditionId') conditionId: string) {
-    // 1. Try JSON first (faster for locally created)
+    // 1. Try Supabase first (Primary source of truth)
+    const { data, error } = await this.supabase
+      .getClawdbetClient()
+      .from(this.supabase.writeTable)
+      .select('*')
+      .eq('market_address', conditionId)
+      .single();
+
+    if (data && !error) {
+      const row = data as Record<string, unknown>;
+      return {
+        ...row,
+        yes_odds: toOddsPercent(row.yes_token_supply as string | null),
+        no_odds: toOddsPercent(row.no_token_supply as string | null),
+      };
+    }
+
+    // 2. Try JSON as fallback
     if (fs.existsSync(this.jsonFilePath)) {
       try {
         const content = fs.readFileSync(this.jsonFilePath, 'utf8');
         const markets = JSON.parse(content);
-        const match = markets.find((m: any) => m.market_address === conditionId);
+        const match = markets.find((m: any) => m.market_address.toLowerCase() === conditionId.toLowerCase());
         if (match) {
           return {
             ...match,
@@ -118,23 +142,6 @@ export class MarketsController {
       } catch (e) { /* ignore */ }
     }
 
-    // 2. Try Supabase
-    const { data, error } = await this.supabase
-      .getClawdbetClient()
-      .from(this.supabase.writeTable)
-      .select('*')
-      .eq('market_address', conditionId)
-      .single();
-
-    if (error || !data) {
-      throw new NotFoundException(`Market ${conditionId} not found`);
-    }
-
-    const row = data as Record<string, unknown>;
-    return {
-      ...row,
-      yes_odds: toOddsPercent(row.yes_token_supply as string | null),
-      no_odds: toOddsPercent(row.no_token_supply as string | null),
-    };
+    throw new NotFoundException(`Market ${conditionId} not found`);
   }
 }

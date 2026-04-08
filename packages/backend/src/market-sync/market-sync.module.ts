@@ -4,5 +4,6 @@ import { MarketResolutionService } from './market-resolution.service';
 
 @Module({
   providers: [MarketPricesService, MarketResolutionService],
+  exports: [MarketPricesService],
 })
 export class MarketSyncModule {}
