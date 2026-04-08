@@ -11,11 +11,37 @@ import * as path from 'path';
 export class MarketRelayerService {
   private readonly logger = new Logger(MarketRelayerService.name);
   private readonly jsonFilePath = path.join(process.cwd(), 'markets.json');
+  private nextNonce: number | null = null;
+  private nonceLock: Promise<void> = Promise.resolve();
 
   constructor(
     private readonly config: ConfigService,
     private readonly supabase: SupabaseService,
   ) {}
+
+  /**
+   * Safe nonce acquisition with locking to prevent parallel collisions.
+   */
+  private async getAtomicNonce(wallet: Wallet): Promise<number> {
+    await this.nonceLock; // Wait for any existing tx to finish preparing
+    
+    let resolveLock: () => void;
+    this.nonceLock = new Promise((resolve) => {
+      resolveLock = resolve;
+    });
+
+    try {
+      if (this.nextNonce === null) {
+        this.nextNonce = await wallet.getNonce('latest');
+        this.logger.log(`Initialized relayer nonce to: ${this.nextNonce}`);
+      }
+      const nonceToUse = this.nextNonce;
+      this.nextNonce++; // Optimistically increment for the next person in line
+      return nonceToUse;
+    } finally {
+      resolveLock!(); // Release the lock
+    }
+  }
 
   /**
    * Executes the on-chain market creation after verifying user payment.
@@ -27,7 +53,7 @@ export class MarketRelayerService {
     initialLiquidity: string;
     collateralToken: string;
     userPaymentTxHash?: string;
-  }): Promise<{ txHash: string; conditionId: string }> {
+  }, retryCount = 0): Promise<{ txHash: string; conditionId: string }> {
     const rpcUrl = this.config.get<string>('RPC_URL');
     const factoryAddress = this.config.get<string>('OPENBET_FACTORY_ADDRESS');
     const privateKey = this.config.get<string>('WALLET_PRIVATE_KEY');
@@ -40,7 +66,7 @@ export class MarketRelayerService {
     const relayerWallet = new Wallet(privateKey, provider);
     const factory = new Contract(factoryAddress, PNP_FACTORY_ABI, relayerWallet);
 
-    this.logger.log(`Executing market creation for: "${params.question}"`);
+    this.logger.log(`${retryCount > 0 ? 'Retrying (Nonce Fix): ' : ''}Executing market creation for: "${params.question}"`);
 
     try {
       // 1. Prepare Token and Liquidity
@@ -71,9 +97,9 @@ export class MarketRelayerService {
         this.logger.log(`Approval confirmed: ${approveTx.hash}`);
       }
 
-      // 4. Send Transaction (Backend Relayer)
-      const nonce = await relayerWallet.getNonce('latest');
-      this.logger.log(`Using nonce: ${nonce} for market creation`);
+      // 4. Send Transaction (Backend Relayer) with Atomic Nonce
+      const nonce = await this.getAtomicNonce(relayerWallet);
+      this.logger.log(`[Queue] Sending Market Created with Nonce: ${nonce}`);
 
       const tx = await factory.createPredictionMarket(
         adjustedLiquidity,
@@ -107,7 +133,14 @@ export class MarketRelayerService {
         txHash: tx.hash,
         conditionId,
       };
-    } catch (error) {
+    } catch (error: any) {
+      // Automatic Nonce Recovery
+      if ((error.message?.includes('nonce too low') || error.code === 'NONCE_EXPIRED') && retryCount < 2) {
+        this.logger.warn(`NONCE_EXPIRED detected for nonce ${this.nextNonce}. Re-syncing with chain...`);
+        this.nextNonce = null; // Force re-fetch from chain next time
+        return this.executeMarketCreation(params, retryCount + 1);
+      }
+
       if (error instanceof BadRequestException) {
         throw error;
       }

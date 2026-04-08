@@ -7,8 +7,8 @@
     "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
     "market_createdTime": "2026-04-08T09:59:09.356Z",
     "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
-    "yes_token_supply": "546568067362666663",
-    "no_token_supply": "453431932637333336"
+    "yes_token_supply": "495655620195745822",
+    "no_token_supply": "504344379804254177"
   },
   {
     "market_address": "0x57dd05851c6a24652d7347f3a8394faf6fd6ef6d7a89b02b6fabd35e4752c848",
@@ -50,6 +50,72 @@
     "market_endTime": "2026-04-15T10:17:33.000Z",
     "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
     "market_createdTime": "2026-04-08T10:17:36.590Z",
+    "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
+    "yes_token_supply": "500000000000000000",
+    "no_token_supply": "500000000000000000"
+  },
+  {
+    "market_address": "0x39abefbcb4be5e46a0b71ef2ceb2c10be394d6f96b9af131d7e6dac121b580d1",
+    "question": "Will OpenAI officially announce 'GPT-6' or its successor before July 1st, 2026?",
+    "description": "This market predicts whether OpenAI will make an official announcement regarding the release of 'GPT-6' or a subsequent iteration before July 1, 2026.",
+    "market_endTime": "2026-07-01T00:00:00.000Z",
+    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
+    "market_createdTime": "2026-04-08T10:26:58.941Z",
+    "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
+    "yes_token_supply": "500000000000000000",
+    "no_token_supply": "500000000000000000"
+  },
+  {
+    "market_address": "0xaa4a2f813c635421a03405199bda70aa08bd623dc704628f30b6222b70832c25",
+    "question": "Will NVIDIA (NVDA) stock close above $950 on the next quarterly earnings report date?",
+    "description": "This market seeks to predict whether NVIDIA's (symbol: NVDA) stock will close above $950 on the day the company releases its next quarterly earnings report.",
+    "market_endTime": "2026-04-15T10:27:25.000Z",
+    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
+    "market_createdTime": "2026-04-08T10:27:31.090Z",
+    "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
+    "yes_token_supply": "500000000000000000",
+    "no_token_supply": "500000000000000000"
+  },
+  {
+    "market_address": "0x596e2801b0ff76c5f625f16a1b3eb73cfcbe8f6be68ca550771624fcdc79f7db",
+    "question": "Will the Federal Reserve announce a decrease in interest rates (rate cut) at their next scheduled meeting?",
+    "description": "This market predicts whether the Federal Reserve will announce an interest rate cut at their next scheduled meeting. The decision will be based on the official announcement from the Federal Reserve.",
+    "market_endTime": "2026-04-15T10:27:52.000Z",
+    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
+    "market_createdTime": "2026-04-08T10:27:58.321Z",
+    "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
+    "yes_token_supply": "500000000000000000",
+    "no_token_supply": "500000000000000000"
+  },
+  {
+    "market_address": "0x67e741caefe259c80fe5c366489b5620361d4ff3c7f4a95ba8a50fc2129a0178",
+    "question": "Will Tesla officially unveil a production-ready vehicle priced under $25,000 before July 31st, 2026?",
+    "description": "This market seeks to determine whether Tesla will officially unveil a production-ready vehicle with a base price under $25,000 before the stated date. A production-ready vehicle implies the model is finalized and ready for manufacturing.",
+    "market_endTime": "2026-07-01T18:40:00.000Z",
+    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
+    "market_createdTime": "2026-04-08T10:32:34.974Z",
+    "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
+    "yes_token_supply": "500000000000000000",
+    "no_token_supply": "500000000000000000"
+  },
+  {
+    "market_address": "0x6cab285666a3d7346b55244ff4086e394e75622b03d2a3bfc8b0d330f3f69945",
+    "question": "Will SpaceX successfully complete a 'catch' of the Starship Upper Stage (Ship) during a flight test by the end of 2026?",
+    "description": "This market predicts whether SpaceX will successfully catch the Starship Upper Stage during a flight test by the end of the year 2026. Success is defined by SpaceX confirming the catch operation as per their testing protocols.",
+    "market_endTime": "2027-01-01T05:19:59.000Z",
+    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
+    "market_createdTime": "2026-04-08T10:33:03.365Z",
+    "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
+    "yes_token_supply": "500000000000000000",
+    "no_token_supply": "500000000000000000"
+  },
+  {
+    "market_address": "0x1eb2ba52d5d5464681539bd52826baee97e0bc1920837c11eb13fa4ead486b7b",
+    "question": "Will Apple announce a standalone 'Siri AI' subscription service at WWDC 2026?",
+    "description": "This market predicts whether Apple will unveil a separate subscription offering specifically for 'Siri AI' at their Worldwide Developers Conference (WWDC) in 2026. The focus is on whether there will be a distinct service announced, independent of current offerings.",
+    "market_endTime": "2026-10-15T21:20:00.000Z",
+    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
+    "market_createdTime": "2026-04-08T10:33:30.451Z",
     "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
     "yes_token_supply": "500000000000000000",
     "no_token_supply": "500000000000000000"
