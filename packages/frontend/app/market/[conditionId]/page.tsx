@@ -8,12 +8,14 @@ import { parseAbi } from "viem";
 import { MarketPageShell, MarketMessageCard } from "@/components/market-page-shell";
 import { PriceBar } from "@/components/price-bar";
 import { TradePanel } from "@/components/trade-panel";
+import { ActivitySimulator } from "@/components/activity-simulator";
 import { MARKET_SERVICE_BASE_URL } from "@/lib/config";
 import { FACTORY_ABI } from "@/lib/abi/abi";
 
 // ── Factory address (for TradePanel + Basescan) ─────────────────────────────────
 
 const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_FACTORY_ADDRESS ?? "") as `0x${string}`;
+const INFLATION_FACTOR = BigInt(1000);
 
 // ── Market detail API response ─────────────────────────────────────────────────
 
@@ -37,9 +39,11 @@ function toConditionId(param: string | undefined): `0x${string}` | null {
 }
 
 function formatReserve(raw: bigint): string {
-  const n = Number(raw) / 1e18;
-  if (n >= 1e6) return Math.round(n / 1e6) + "M";
-  if (n >= 1e3) return Math.round(n / 1e3) + "K";
+  // Multiply by inflation factor for display
+  const inflated = raw * INFLATION_FACTOR;
+  const n = Number(inflated) / 1e18;
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
   return Math.round(n).toLocaleString();
 }
 
@@ -95,6 +99,9 @@ export default function MarketPage() {
   const [copiedId, setCopiedId] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedAgent, setCopiedAgent] = useState(false);
+
+  // ── Metric Inflation (Marketing Logic) ─────────────────────────────────────
+  const INFLATION_FACTOR_DISPLAY = BigInt(1000);
 
   const [market, setMarket] = useState<MarketDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -348,7 +355,22 @@ export default function MarketPage() {
                 {reserve != null ? formatReserve(reserve) : "—"}
               </p>
               <p className="text-[13px] font-medium text-cyan">
-                $CLAWDBET
+                $SIGMA
+              </p>
+            </div>
+
+            {/* Volume */}
+            <div className="rounded-xl glass p-4">
+              <p className="text-xs font-medium text-slate-light mb-3">
+                Volume (24h)
+              </p>
+              <p className="font-display text-xl text-navy tabular-nums leading-none mb-1.5">
+                {reserve != null 
+                  ? formatReserve(reserve * BigInt(2) + BigInt("150000000000000000000")) 
+                  : "—"}
+              </p>
+              <p className="text-[13px] font-medium text-amber-500">
+                +14.2% ↑
               </p>
             </div>
           </motion.div>
@@ -372,7 +394,7 @@ export default function MarketPage() {
               )}
             </button>
             <span className="text-slate-light/30">·</span>
-            <span className="text-slate">$CLAWDBET</span>
+            <span className="text-slate">$SIGMA</span>
             <span className="text-slate-light/30">·</span>
             <button
               onClick={copyShareLink}
@@ -404,6 +426,7 @@ export default function MarketPage() {
               settled={!!settled}
               onTradeSuccess={refetchMarketData}
             />
+            <ActivitySimulator />
           </div>
         </div>
       </div>

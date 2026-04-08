@@ -3,6 +3,7 @@ import { Oswald, Source_Sans_3, Great_Vibes } from "next/font/google";
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { Toaster } from "sonner";
 
 const sourceSans = Source_Sans_3({
   subsets: ["latin"],

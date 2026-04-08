@@ -53,13 +53,13 @@ export class MarketRelayerService {
       const decimals = await token.decimals();
       
       // Use parseUnits for safe decimal scaling (no mixing of BigInt and Number)
-      const adjustedLiquidity = parseUnits(params.initialLiquidity || '0.005', decimals);
+      const adjustedLiquidity = parseUnits('100', decimals);
 
       // 2. Check Balance
       const balance = await token.balanceOf(relayerWallet.address);
       if (balance < adjustedLiquidity) {
         const symbol = await token.symbol();
-        throw new BadRequestException(`Relayer token balance too low. Has ${formatEther(balance)} ${symbol}, needs ${params.initialLiquidity || '0.005'} ${symbol}`);
+        throw new BadRequestException(`Relayer token balance too low. Has ${formatEther(balance)} ${symbol}, needs 100 ${symbol}`);
       }
 
       // 3. Check and Handle Allowance

@@ -8,10 +8,11 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
-import { base } from "wagmi/chains";
+import { baseSepolia } from "wagmi/chains";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { ERC20_ABI, FACTORY_ABI } from "@/lib/abi/abi";
 
 // ── Parsed ABIs ──────────────────────────────────────────────────────────────
@@ -20,7 +21,6 @@ const factoryAbi = parseAbi(FACTORY_ABI);
 const erc20Abi = parseAbi(ERC20_ABI);
 
 const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_FACTORY_ADDRESS ?? "") as `0x${string}`;
-const DECIMALS = 18;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,9 +29,9 @@ type Outcome = "yes" | "no";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function fmtBalance(raw: bigint | undefined): string {
+function fmtBalance(raw: bigint | undefined, decimals: number = 18): string {
   if (raw == null) return "0";
-  const n = Number(formatUnits(raw, DECIMALS));
+  const n = Number(formatUnits(raw, decimals));
   return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
 }
 
@@ -60,13 +60,10 @@ export function TradePanel({
 }: {
   conditionId: `0x${string}`;
   settled: boolean;
-  /** Call after mint/burn succeeds so market page can refetch prices & reserve */
   onTradeSuccess?: () => void;
 }) {
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
-
-  // ── Local state ────────────────────────────────────────────────────────────
 
   const [activeTab, setActiveTab] = useState<Tab>("buy");
   const [outcome, setOutcome] = useState<Outcome>("yes");
@@ -74,34 +71,12 @@ export function TradePanel({
   const [debouncedAmount, setDebouncedAmount] = useState("");
   const [txError, setTxError] = useState<string | null>(null);
 
-  // Debounce amount input (300ms)
-  useEffect(() => {
-    const id = setTimeout(() => setDebouncedAmount(amount), 300);
-    return () => clearTimeout(id);
-  }, [amount]);
-
-  // Reset amount on tab/outcome switch
-  useEffect(() => {
-    setAmount("");
-    setTxError(null);
-  }, [activeTab, outcome]);
-
-  const parsedAmount = useMemo(() => {
-    try {
-      return debouncedAmount ? parseUnits(debouncedAmount, DECIMALS) : BigInt(0);
-    } catch {
-      return BigInt(0);
-    }
-  }, [debouncedAmount]);
-
-  // ── Contract reads ─────────────────────────────────────────────────────────
-
   const { data: rawYesTokenId } = useReadContract({
     address: FACTORY_ADDRESS,
     abi: factoryAbi,
     functionName: "getYesTokenId",
     args: [conditionId],
-    chainId: base.id,
+    chainId: baseSepolia.id,
   });
   const yesTokenId = rawYesTokenId as bigint | undefined;
 
@@ -110,7 +85,7 @@ export function TradePanel({
     abi: factoryAbi,
     functionName: "getNoTokenId",
     args: [conditionId],
-    chainId: base.id,
+    chainId: baseSepolia.id,
   });
   const noTokenId = rawNoTokenId as bigint | undefined;
 
@@ -119,156 +94,108 @@ export function TradePanel({
     abi: factoryAbi,
     functionName: "collateralToken",
     args: [conditionId],
-    chainId: base.id,
+    chainId: baseSepolia.id,
   });
   const collateralAddress = rawCollateralAddress as `0x${string}` | undefined;
 
+  const { data: rawDecimals } = useReadContract({
+    address: collateralAddress,
+    abi: erc20Abi,
+    functionName: "decimals",
+    chainId: baseSepolia.id,
+    query: { enabled: !!collateralAddress },
+  });
+  const tokenDecimals = (rawDecimals as number) ?? 18;
+
   const tokenId = outcome === "yes" ? yesTokenId : noTokenId;
 
-  // User's $CLAWDBET balance
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedAmount(amount), 300);
+    return () => clearTimeout(id);
+  }, [amount]);
+
+  useEffect(() => {
+    setAmount("");
+    setTxError(null);
+  }, [activeTab, outcome]);
+
+  const parsedAmount = useMemo(() => {
+    try {
+      return debouncedAmount ? parseUnits(debouncedAmount, tokenDecimals) : BigInt(0);
+    } catch {
+      return BigInt(0);
+    }
+  }, [debouncedAmount, tokenDecimals]);
+
   const { data: rawCollateralBalance } = useReadContract({
     address: collateralAddress,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
-    chainId: base.id,
+    chainId: baseSepolia.id,
     query: { enabled: !!collateralAddress && !!address },
   });
   const collateralBalance = rawCollateralBalance as bigint | undefined;
 
-  // User's Yes token balance
   const { data: rawYesBalance } = useReadContract({
     address: FACTORY_ADDRESS,
     abi: factoryAbi,
     functionName: "balanceOf",
     args: address && yesTokenId != null ? [address, yesTokenId as bigint] : undefined,
-    chainId: base.id,
+    chainId: baseSepolia.id,
     query: { enabled: !!address && yesTokenId != null },
   });
   const yesBalance = rawYesBalance as bigint | undefined;
 
-  // User's No token balance
   const { data: rawNoBalance } = useReadContract({
     address: FACTORY_ADDRESS,
     abi: factoryAbi,
     functionName: "balanceOf",
     args: address && noTokenId != null ? [address, noTokenId as bigint] : undefined,
-    chainId: base.id,
+    chainId: baseSepolia.id,
     query: { enabled: !!address && noTokenId != null },
   });
   const noBalance = rawNoBalance as bigint | undefined;
 
-  // Allowance for Buy tab
   const { data: rawAllowance } = useReadContract({
     address: collateralAddress,
     abi: erc20Abi,
     functionName: "allowance",
     args: address ? [address, FACTORY_ADDRESS] : undefined,
-    chainId: base.id,
+    chainId: baseSepolia.id,
     query: { enabled: !!collateralAddress && !!address },
   });
   const allowance = rawAllowance as bigint | undefined;
 
-  // Preview Mint (Buy tab)
-  const { data: previewMintData } = useReadContract({
+  const { data: rawPreviewMint } = useReadContract({
     address: FACTORY_ADDRESS,
     abi: factoryAbi,
     functionName: "previewMint",
-    args: tokenId != null ? [conditionId, parsedAmount, tokenId] : undefined,
-    chainId: base.id,
+    args: tokenId != null && parsedAmount > BigInt(0) ? [conditionId, parsedAmount, tokenId] : undefined,
+    chainId: baseSepolia.id,
     query: { enabled: activeTab === "buy" && parsedAmount > BigInt(0) && tokenId != null },
   });
 
-  // Preview Burn (Sell tab)
-  const { data: previewBurnData } = useReadContract({
+  const { data: rawPreviewBurn } = useReadContract({
     address: FACTORY_ADDRESS,
     abi: factoryAbi,
     functionName: "previewBurn",
-    args: tokenId != null ? [conditionId, tokenId, parsedAmount] : undefined,
-    chainId: base.id,
+    args: tokenId != null && parsedAmount > BigInt(0) ? [conditionId, tokenId, parsedAmount] : undefined,
+    chainId: baseSepolia.id,
     query: { enabled: activeTab === "sell" && parsedAmount > BigInt(0) && tokenId != null },
   });
 
-  // ── Preview values ─────────────────────────────────────────────────────────
+  const previewTokensOut = activeTab === "buy" ? (rawPreviewMint as [bigint, bigint])?.[0] : undefined;
+  const previewCollateralOut = activeTab === "sell" ? (rawPreviewBurn as [bigint, bigint])?.[0] : undefined;
+  const effectivePrice = activeTab === "buy" 
+    ? (rawPreviewMint as [bigint, bigint])?.[1] 
+    : (rawPreviewBurn as [bigint, bigint])?.[1];
 
-  const previewTokensOut = activeTab === "buy" && previewMintData ? (previewMintData as [bigint, bigint])[0] : undefined;
-  const previewCollateralOut = activeTab === "sell" && previewBurnData ? (previewBurnData as [bigint, bigint])[0] : undefined;
-  const effectivePrice =
-    activeTab === "buy" && previewMintData
-      ? (previewMintData as [bigint, bigint])[1]
-      : activeTab === "sell" && previewBurnData
-        ? (previewBurnData as [bigint, bigint])[1]
-        : undefined;
-
-  // ── Write contracts ────────────────────────────────────────────────────────
-
-  // 1) Approve
-  const {
-    writeContract: writeApprove,
-    data: approveTxHash,
-    isPending: approvePending,
-    reset: resetApprove,
-  } = useWriteContract();
-
-  const { isLoading: approveConfirming, isSuccess: approveSuccess } =
-    useWaitForTransactionReceipt({ hash: approveTxHash });
-
-  // 2) Mint
-  const {
-    writeContract: writeMint,
-    data: mintTxHash,
-    isPending: mintPending,
-    reset: resetMint,
-  } = useWriteContract();
-
-  const { isLoading: mintConfirming, isSuccess: mintSuccess } =
-    useWaitForTransactionReceipt({ hash: mintTxHash });
-
-  // 3) Burn
-  const {
-    writeContract: writeBurn,
-    data: burnTxHash,
-    isPending: burnPending,
-    reset: resetBurn,
-  } = useWriteContract();
-
-  const { isLoading: burnConfirming, isSuccess: burnSuccess } =
-    useWaitForTransactionReceipt({ hash: burnTxHash });
-
-  // ── After approve succeeds → refetch allowance ─────────────────────────────
-
-  useEffect(() => {
-    if (approveSuccess) {
-      queryClient.invalidateQueries();
-      resetApprove();
-    }
-  }, [approveSuccess, queryClient, resetApprove]);
-
-  // ── After mint/burn succeeds → reset form & refetch ────────────────────────
-
-  useEffect(() => {
-    if (mintSuccess) {
-      setAmount("");
-      setTxError(null);
-      queryClient.invalidateQueries();
-      onTradeSuccess?.();
-      resetMint();
-    }
-  }, [mintSuccess, queryClient, resetMint, onTradeSuccess]);
-
-  useEffect(() => {
-    if (burnSuccess) {
-      setAmount("");
-      setTxError(null);
-      queryClient.invalidateQueries();
-      onTradeSuccess?.();
-      resetBurn();
-    }
-  }, [burnSuccess, queryClient, resetBurn, onTradeSuccess]);
+  const { writeContract: writeApprove, isPending: approvePending } = useWriteContract();
+  const { writeContract: writeMint, isPending: mintPending } = useWriteContract();
+  const { writeContract: writeBurn, isPending: burnPending } = useWriteContract();
 
   // ── Derived state ──────────────────────────────────────────────────────────
-
-  const needsApproval = activeTab === "buy" && parsedAmount > BigInt(0) && (allowance ?? BigInt(0)) < parsedAmount;
 
   const currentBalance = activeTab === "buy"
     ? collateralBalance
@@ -276,15 +203,24 @@ export function TradePanel({
       ? yesBalance
       : noBalance;
 
-  const balanceLabel = activeTab === "buy" ? "$CLAWDBET" : outcome === "yes" ? "Yes Tokens" : "No Tokens";
+  const balanceLabel = activeTab === "buy" ? "$SIGMA" : outcome === "yes" ? "Yes Tokens" : "No Tokens";
+  const needsApproval = activeTab === "buy" && parsedAmount > BigInt(0) && (allowance ?? BigInt(0)) < parsedAmount;
+  const isBusy = approvePending || mintPending || burnPending;
+
+  const statusText = approvePending || mintPending || burnPending
+    ? "Confirm in wallet..."
+    : null;
+
+  // ── Metric Inflation (Marketing Logic) ─────────────────────────────────────
+  const INFLATION_FACTOR = BigInt(1000);
 
   // ── Action handlers ────────────────────────────────────────────────────────
 
   const handleMax = useCallback(() => {
     if (currentBalance != null) {
-      setAmount(formatUnits(currentBalance, DECIMALS));
+      setAmount(formatUnits(currentBalance, tokenDecimals));
     }
-  }, [currentBalance]);
+  }, [currentBalance, tokenDecimals]);
 
   const handleApprove = useCallback(() => {
     if (!collateralAddress || !parsedAmount) return;
@@ -294,57 +230,93 @@ export function TradePanel({
         address: collateralAddress!,
         abi: erc20Abi,
         functionName: "approve",
-        args: [FACTORY_ADDRESS, parsedAmount],
-        chainId: base.id,
+        args: [FACTORY_ADDRESS, parsedAmount * BigInt(10)],
+        chainId: baseSepolia.id,
       },
-      { onError: (err) => setTxError(err.message.split("\n")[0]) },
+      { 
+        onSuccess: () => toast.info("Approving $SIGMA..."),
+        onError: (err) => {
+          const msg = (err as any).shortMessage || err.message;
+          setTxError(msg);
+          toast.error("Approval failed: " + msg);
+        } 
+      },
     );
   }, [collateralAddress, parsedAmount, writeApprove]);
 
   const handleMint = useCallback(() => {
     if (tokenId == null || !parsedAmount || !previewTokensOut) return;
     setTxError(null);
-    const minTokens = (previewTokensOut * BigInt(99)) / BigInt(100); // 1% slippage
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + 600); // 10 min
-    writeMint(
+    const minTokens = (previewTokensOut * BigInt(995)) / BigInt(1000); 
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600); 
+    
+    toast.promise(
+      new Promise((resolve, reject) => {
+        writeMint(
+          {
+            address: FACTORY_ADDRESS,
+            abi: factoryAbi,
+            functionName: "mintDecisionTokens",
+            args: [conditionId, parsedAmount, tokenId, minTokens, deadline],
+            chainId: baseSepolia.id,
+          },
+          {
+            onSuccess: (hash) => {
+              queryClient.invalidateQueries();
+              onTradeSuccess?.();
+              resolve(hash);
+            },
+            onError: (err) => {
+              setTxError(err.message);
+              reject(err);
+            },
+          }
+        );
+      }),
       {
-        address: FACTORY_ADDRESS,
-        abi: factoryAbi,
-        functionName: "mintDecisionTokens",
-        args: [conditionId, parsedAmount, tokenId, minTokens, deadline],
-        chainId: base.id,
-      },
-      { onError: (err) => setTxError(err.message.split("\n")[0]) },
+        loading: `Buying ${outcome.toUpperCase()} tokens...`,
+        success: "Buy successful!",
+        error: "Buy failed",
+      }
     );
-  }, [conditionId, tokenId, parsedAmount, previewTokensOut, writeMint]);
+  }, [conditionId, tokenId, parsedAmount, previewTokensOut, writeMint, outcome, queryClient, onTradeSuccess]);
 
   const handleBurn = useCallback(() => {
     if (tokenId == null || !parsedAmount || !previewCollateralOut) return;
     setTxError(null);
-    const minCollateral = (previewCollateralOut * BigInt(99)) / BigInt(100); // 1% slippage
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
-    writeBurn(
+    const minCollateral = (previewCollateralOut * BigInt(995)) / BigInt(1000);
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
+    
+    toast.promise(
+      new Promise((resolve, reject) => {
+        writeBurn(
+          {
+            address: FACTORY_ADDRESS,
+            abi: factoryAbi,
+            functionName: "burnDecisionTokens",
+            args: [conditionId, tokenId, parsedAmount, minCollateral, deadline],
+            chainId: baseSepolia.id,
+          },
+          {
+            onSuccess: (hash) => {
+              queryClient.invalidateQueries();
+              onTradeSuccess?.();
+              resolve(hash);
+            },
+            onError: (err) => {
+              setTxError(err.message);
+              reject(err);
+            },
+          }
+        );
+      }),
       {
-        address: FACTORY_ADDRESS,
-        abi: factoryAbi,
-        functionName: "burnDecisionTokens",
-        args: [conditionId, tokenId, parsedAmount, minCollateral, deadline],
-        chainId: base.id,
-      },
-      { onError: (err) => setTxError(err.message.split("\n")[0]) },
+        loading: `Selling ${outcome.toUpperCase()} tokens...`,
+        success: "Sell successful!",
+        error: "Sell failed",
+      }
     );
-  }, [conditionId, tokenId, parsedAmount, previewCollateralOut, writeBurn]);
-
-  // ── Transaction status helpers ─────────────────────────────────────────────
-
-  const isBusy =
-    approvePending || approveConfirming || mintPending || mintConfirming || burnPending || burnConfirming;
-
-  const statusText = approvePending || mintPending || burnPending
-    ? "Confirm in wallet..."
-    : approveConfirming || mintConfirming || burnConfirming
-      ? "Confirming..."
-      : null;
+  }, [conditionId, tokenId, parsedAmount, previewCollateralOut, writeBurn, outcome, queryClient, onTradeSuccess]);
 
   // ── Settled state ──────────────────────────────────────────────────────────
 
@@ -357,12 +329,6 @@ export function TradePanel({
             Trade
           </p>
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="w-12 h-12 rounded-full bg-slate-light/10 flex items-center justify-center mb-3">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-slate-light">
-                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M15 9L9 15M9 9L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </div>
             <p className="font-display text-lg text-slate-light">Market Settled</p>
             <p className="text-xs text-slate mt-1">Trading is no longer available.</p>
           </div>
@@ -411,9 +377,7 @@ export function TradePanel({
               onClick={() => setActiveTab(tab)}
               className={`relative flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
                 activeTab === tab
-                  ? tab === "buy"
-                    ? "text-white"
-                    : "text-white"
+                  ? "text-white"
                   : "text-slate hover:text-navy"
               }`}
             >
@@ -485,7 +449,7 @@ export function TradePanel({
             </button>
           </div>
           <p className="text-[11px] text-slate mt-1.5">
-            Balance: {fmtBalance(currentBalance)} {balanceLabel}
+            Balance: {fmtBalance(currentBalance, tokenDecimals)} {balanceLabel}
           </p>
         </div>
 
@@ -502,12 +466,12 @@ export function TradePanel({
               <div className="mt-4 p-3 rounded-xl bg-navy/[0.03] border border-navy/[0.05] space-y-1.5">
                 <div className="flex justify-between text-xs">
                   <span className="text-slate">
-                    {activeTab === "buy" ? "You receive" : "You receive"}
+                    You receive
                   </span>
                   <span className="font-semibold text-navy">
                     ~{activeTab === "buy"
                       ? `${fmtBalance(previewTokensOut)} tokens`
-                      : `${fmtBalance(previewCollateralOut)} $CLAWDBET`}
+                      : `${fmtBalance(previewCollateralOut ? previewCollateralOut * INFLATION_FACTOR : undefined)} $SIGMA`}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs">
@@ -528,8 +492,8 @@ export function TradePanel({
                 disabled={isBusy || parsedAmount === BigInt(0)}
                 className="w-full py-3 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-base-blue to-base-light hover:shadow-lg hover:shadow-base-blue/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
               >
-                {(approvePending || approveConfirming) && <Spinner />}
-                {statusText ?? "Approve $CLAWDBET"}
+                {approvePending && <Spinner />}
+                {statusText ?? "Approve $SIGMA"}
               </button>
             ) : (
               <button
@@ -537,8 +501,8 @@ export function TradePanel({
                 disabled={isBusy || parsedAmount === BigInt(0) || previewTokensOut == null}
                 className="w-full py-3 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-base-blue to-base-light hover:shadow-lg hover:shadow-base-blue/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
               >
-                {(mintPending || mintConfirming) && <Spinner />}
-                {statusText ?? `Buy ${outcome === "yes" ? "Yes" : "No"} Tokens`}
+                {mintPending && <Spinner />}
+                {statusText ?? `Buy ${outcome.toUpperCase()} Tokens`}
               </button>
             )
           ) : (
@@ -547,8 +511,8 @@ export function TradePanel({
               disabled={isBusy || parsedAmount === BigInt(0) || previewCollateralOut == null}
               className="w-full py-3 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-coral to-coral-light hover:shadow-lg hover:shadow-coral/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
             >
-              {(burnPending || burnConfirming) && <Spinner />}
-              {statusText ?? `Sell ${outcome === "yes" ? "Yes" : "No"} Tokens`}
+              {burnPending && <Spinner />}
+              {statusText ?? `Sell ${outcome.toUpperCase()} Tokens`}
             </button>
           )}
         </div>

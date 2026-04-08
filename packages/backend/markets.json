@@ -20,5 +20,16 @@
     "no_token_supply": "0",
     "description": "This market predicts whether the TVL in Aerodrome Finance on the Base blockchain will exceed $1.2 billion. Verification will be based on data available on DeFiLlama.",
     "collateralToken": "0x7eaa021bf63f4cde1943431a69471f79ead7a8d5"
+  },
+  {
+    "market_address": "0x2b47b29f2c7b70ad5c58ef7545a276adab40d20ea25236a08a6b0a8ab929a2b6",
+    "question": "Will Base daily transactions exceed 5 Million by the end of this week?",
+    "market_endTime": "2026-04-15T08:58:31.000Z",
+    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
+    "market_createdTime": "2026-04-08T08:58:34.849Z",
+    "yes_token_supply": "0",
+    "no_token_supply": "0",
+    "description": "This market seeks to determine if the daily transaction count on the Base network will exceed 5 million by the end of this week.",
+    "collateralToken": "0x7eaa021bf63f4cde1943431a69471f79ead7a8d5"
   }
 ]
