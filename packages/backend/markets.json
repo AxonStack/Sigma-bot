@@ -51,7 +51,7 @@
     "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
     "market_createdTime": "2026-04-08T10:17:36.590Z",
     "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
-    "yes_token_supply": "0",
-    "no_token_supply": "0"
+    "yes_token_supply": "500000000000000000",
+    "no_token_supply": "500000000000000000"
   }
 ]
