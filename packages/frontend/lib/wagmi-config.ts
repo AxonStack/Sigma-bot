@@ -14,9 +14,6 @@ export const config = getDefaultConfig({
   projectId,
   chains: [baseSepolia],
   ssr: true,
-  storage: createStorage({
-    storage: typeof window !== 'undefined' ? window.localStorage : cookieStorage,
-  }),
   transports: {
     [baseSepolia.id]: http(process.env.NEXT_PUBLIC_RPC_URL ?? "https://sepolia.base.org"),
   },

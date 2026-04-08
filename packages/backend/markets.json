@@ -31,5 +31,27 @@
     "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
     "yes_token_supply": "500000000000000000",
     "no_token_supply": "500000000000000000"
+  },
+  {
+    "market_address": "0x8a8e100d07a54fa9613e8b4b88b04dffc6feb8a04d8dd9e88381789ead0235d3",
+    "question": "Will the price of Ethereum (ETH) be trading above $4,200 at 12:00 PM UTC on April 20th?",
+    "description": "This market resolves to 'Yes' if the price of Ethereum (ETH) is above $4,200 at exactly 12:00 PM UTC on April 20th. Otherwise, it resolves to 'No'.",
+    "market_endTime": "2026-04-15T10:17:05.000Z",
+    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
+    "market_createdTime": "2026-04-08T10:17:08.633Z",
+    "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
+    "yes_token_supply": "500000000000000000",
+    "no_token_supply": "500000000000000000"
+  },
+  {
+    "market_address": "0x0394e75376060277ef0206eeabfae521d90577f8f9abca7f9746ef063d308ac8",
+    "question": "Will Bitcoin’s market dominance drop below 50% by June 1st, 2026?",
+    "description": "This market seeks to predict whether Bitcoin’s market dominance will fall below 50% by the specified date. Bitcoin's market dominance refers to its market capitalization as a percentage of the total cryptocurrency market capitalization.",
+    "market_endTime": "2026-04-15T10:17:33.000Z",
+    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
+    "market_createdTime": "2026-04-08T10:17:36.590Z",
+    "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
+    "yes_token_supply": "0",
+    "no_token_supply": "0"
   }
 ]

@@ -10,7 +10,8 @@ import { motion, AnimatePresence } from "framer-motion";
 const BACKEND_URL = process.env.NEXT_PUBLIC_CLAWDBET_MARKET_SERVICE_URL;
 const BACKEND_WALLET = process.env.NEXT_PUBLIC_BACKEND_WALLET_ADDRESS;
 const SIGMA_ADDRESS = process.env.NEXT_PUBLIC_SIGMA_ADDRESS as `0x${string}`;
-const GENERATION_FEE_SIGMA = "10"; // 10 SIGMA fee
+const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`;
+const GENERATION_FEE_USDC = "5"; // 5 USDC fee
 
 interface GeneratedMarket {
   resolvable: boolean;
@@ -43,7 +44,7 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
       // Step 1: User pays the fee first
       setPhase("Confirming fee payment in wallet...");
       const tx = await writeContractAsync({
-        address: SIGMA_ADDRESS,
+        address: USDC_ADDRESS,
         abi: [
           {
             name: "transfer",
@@ -59,7 +60,7 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
         functionName: "transfer",
         args: [
           BACKEND_WALLET as `0x${string}`,
-          parseUnits(GENERATION_FEE_SIGMA, 18),
+          parseUnits(GENERATION_FEE_USDC, 6), // USDC usually has 6 decimals
         ],
       });
 
@@ -130,7 +131,7 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
               disabled={loading || !prompt.trim()}
               className="w-full py-4 bg-navy text-white rounded-full font-semibold hover:bg-base-blue transition-all disabled:opacity-50"
             >
-              {loading ? phase : `Generate & Deploy (${GENERATION_FEE_SIGMA} $SIGMA)`}
+              {loading ? phase : `Generate & Deploy (${GENERATION_FEE_USDC} USDC)`}
             </button>
           ) : null}
 
