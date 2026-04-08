@@ -2,14 +2,22 @@ import { Controller, Get, Post, Body, Param, NotFoundException } from '@nestjs/c
 import { SupabaseService } from '../supabase/supabase.service';
 import { MarketGenerationService } from './market-generation.service';
 import { MarketRelayerService } from './market-relayer.service';
+import * as fs from 'fs';
+import * as path from 'path';
 
 function toOddsPercent(raw: string | null): number {
   if (!raw || raw === '0') return 0;
-  return Number((BigInt(raw) * 10000n / BigInt('1000000000000000000'))) / 100;
+  try {
+    return Number((BigInt(raw) * 10000n / BigInt('1000000000000000000'))) / 100;
+  } catch (e) {
+    return 0;
+  }
 }
 
 @Controller()
 export class MarketsController {
+  private readonly jsonFilePath = path.join(process.cwd(), 'markets.json');
+
   constructor(
     private readonly supabase: SupabaseService,
     private readonly generationService: MarketGenerationService,
@@ -46,20 +54,38 @@ export class MarketsController {
 
   @Get('markets')
   async getMarkets() {
-    const { data } = await this.supabase
+    // 1. Fetch from JSON
+    let jsonMarkets: any[] = [];
+    if (fs.existsSync(this.jsonFilePath)) {
+      try {
+        const content = fs.readFileSync(this.jsonFilePath, 'utf8');
+        jsonMarkets = JSON.parse(content);
+      } catch (e) {
+        jsonMarkets = [];
+      }
+    }
+
+    // 2. Fetch from Supabase
+    const { data: dbData } = await this.supabase
       .getClawdbetClient()
       .from(this.supabase.writeTable)
       .select('market_createdTime, market_address, market_endTime, creator, question, yes_token_supply, no_token_supply');
 
-    const rows = (data ?? []) as Array<{
-      market_createdTime: string | null;
-      market_address: string;
-      market_endTime: string | null;
-      creator: string;
-      question: string | null;
-      yes_token_supply: string | null;
-      no_token_supply: string | null;
-    }>;
+    const dbRows = (dbData ?? []) as Array<any>;
+    
+    // 3. Merge (use a Map to avoid duplicates by market_address)
+    const allMarketsMap = new Map();
+    
+    // Add JSON markets first (often more metadata)
+    jsonMarkets.forEach(m => allMarketsMap.set(m.market_address, m));
+    
+    // Add DB markets (override or augment)
+    dbRows.forEach(m => {
+      const existing = allMarketsMap.get(m.market_address) || {};
+      allMarketsMap.set(m.market_address, { ...existing, ...m });
+    });
+
+    const rows = Array.from(allMarketsMap.values());
 
     return rows.map((r) => ({
       createdAt: r.market_createdTime,
@@ -76,6 +102,23 @@ export class MarketsController {
 
   @Get('market/:conditionId')
   async getMarket(@Param('conditionId') conditionId: string) {
+    // 1. Try JSON first (faster for locally created)
+    if (fs.existsSync(this.jsonFilePath)) {
+      try {
+        const content = fs.readFileSync(this.jsonFilePath, 'utf8');
+        const markets = JSON.parse(content);
+        const match = markets.find((m: any) => m.market_address === conditionId);
+        if (match) {
+          return {
+            ...match,
+            yes_odds: toOddsPercent(match.yes_token_supply),
+            no_odds: toOddsPercent(match.no_token_supply),
+          };
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    // 2. Try Supabase
     const { data, error } = await this.supabase
       .getClawdbetClient()
       .from(this.supabase.writeTable)

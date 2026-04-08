@@ -1,0 +1,24 @@
+[
+  {
+    "market_address": "0xae0e7d0bb36b61b9e20edc8f12f4f106ba29da860b1d7cdcb22d409c068c30cd",
+    "question": "Will the official maximum recorded temperature at Bangalore HAL Airport (VOBL) exceed 36°C on April 9, 2026, as reported by the IMD?",
+    "market_endTime": "2026-04-09T10:40:00.000Z",
+    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
+    "market_createdTime": "2026-04-08T11:45:00.000Z",
+    "yes_token_supply": "0",
+    "no_token_supply": "0",
+    "description": "Prediction market based on official IMD weather reports for Bangalore HAL Airport.",
+    "collateralToken": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+  },
+  {
+    "market_address": "0xfcd459ec965e8eed987d30965a0a5a9fad58206401e9f4f0be2ff403d919af4d",
+    "question": "Will the total value locked (TVL) in Aerodrome Finance on Base be higher than $1.2 Billion at 10:00 AM UTC on April 9, 2026, according to DeFiLlama?",
+    "market_endTime": "2026-04-15T07:40:09.000Z",
+    "creator": "0x92F77d44895C22618d1515C3446a9A18559166F8",
+    "market_createdTime": "2026-04-08T07:40:12.460Z",
+    "yes_token_supply": "0",
+    "no_token_supply": "0",
+    "description": "This market predicts whether the TVL in Aerodrome Finance on the Base blockchain will exceed $1.2 billion. Verification will be based on data available on DeFiLlama.",
+    "collateralToken": "0x7eaa021bf63f4cde1943431a69471f79ead7a8d5"
+  }
+]

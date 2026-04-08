@@ -148,6 +148,7 @@ export class MarketResolutionService {
             },
             { role: 'user', content: `Question: ${question}\nSource: ${source}` }
           ],
+          max_tokens: Number(this.config.get<string>('LLM_MAX_TOKENS')) || 1000,
         }, {
           headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' }
         });

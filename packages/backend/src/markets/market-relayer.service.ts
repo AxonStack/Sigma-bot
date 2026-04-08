@@ -1,12 +1,16 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Contract, JsonRpcProvider, Wallet, parseEther, formatEther } from 'ethers';
+import { Contract, JsonRpcProvider, Wallet, parseEther, formatEther, parseUnits } from 'ethers';
 import { PNP_FACTORY_ABI } from '../abi/pnp-factory.abi';
 import { SupabaseService } from '../supabase/supabase.service';
+import { ERC20_ABI } from '../abi/erc20.abi';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class MarketRelayerService {
   private readonly logger = new Logger(MarketRelayerService.name);
+  private readonly jsonFilePath = path.join(process.cwd(), 'markets.json');
 
   constructor(
     private readonly config: ConfigService,
@@ -36,39 +40,135 @@ export class MarketRelayerService {
     const relayerWallet = new Wallet(privateKey, provider);
     const factory = new Contract(factoryAddress, PNP_FACTORY_ABI, relayerWallet);
 
-    // 1. Verify Payment (Simulation for now, ideally check userPaymentTxHash)
-    // In a real app, you would verify that the txHash exists and contains the correct fee + 10% commission.
     this.logger.log(`Executing market creation for: "${params.question}"`);
 
     try {
-      // 2. Prepare Transaction
-      const liquidity = parseEther(params.initialLiquidity || '0.1');
+      // 1. Prepare Token and Liquidity
+      const isNative = params.collateralToken === '0x0000000000000000000000000000000000000000';
+      if (isNative) {
+        throw new BadRequestException('Factory is non-payable. Please provide a valid ERC20 collateral token address.');
+      }
+
+      const token = new Contract(params.collateralToken, ERC20_ABI, relayerWallet);
+      const decimals = await token.decimals();
       
-      // 3. Send Transaction (Backend Relayer)
+      // Use parseUnits for safe decimal scaling (no mixing of BigInt and Number)
+      const adjustedLiquidity = parseUnits(params.initialLiquidity || '0.005', decimals);
+
+      // 2. Check Balance
+      const balance = await token.balanceOf(relayerWallet.address);
+      if (balance < adjustedLiquidity) {
+        const symbol = await token.symbol();
+        throw new BadRequestException(`Relayer token balance too low. Has ${formatEther(balance)} ${symbol}, needs ${params.initialLiquidity || '0.005'} ${symbol}`);
+      }
+
+      // 3. Check and Handle Allowance
+      const allowance = await token.allowance(relayerWallet.address, factoryAddress);
+      if (allowance < adjustedLiquidity) {
+        this.logger.log(`Insufficient allowance. Approving factory for ${params.collateralToken}...`);
+        const approveTx = await token.approve(factoryAddress, adjustedLiquidity * 10n); // Approve 10x for future use
+        await approveTx.wait();
+        this.logger.log(`Approval confirmed: ${approveTx.hash}`);
+      }
+
+      // 4. Send Transaction (Backend Relayer)
+      const nonce = await relayerWallet.getNonce('pending');
+      this.logger.log(`Using nonce: ${nonce} for market creation`);
+
       const tx = await factory.createPredictionMarket(
-        liquidity,
+        adjustedLiquidity,
         params.collateralToken,
         params.question,
-        BigInt(params.endTime)
+        BigInt(params.endTime),
+        { nonce }
       );
 
       this.logger.log(`Creation transaction sent: ${tx.hash}`);
       const receipt = await tx.wait();
 
-      // 4. Extract conditionId from events
+      // 5. Extract conditionId from events
       const event = receipt.logs.map((log: any) => {
         try { return factory.interface.parseLog(log); } catch (e) { return null; }
       }).find((ev: any) => ev?.name === 'OPENBET_MarketCreated');
 
       const conditionId = event?.args?.conditionId || '0x...';
 
+      // 6. Save Metadata (Supabase + JSON)
+      await this.saveMarketMetadata({
+        conditionId,
+        question: params.question,
+        description: params.description,
+        endTime: params.endTime,
+        creator: relayerWallet.address,
+        collateralToken: params.collateralToken,
+      });
+
       return {
         txHash: tx.hash,
         conditionId,
       };
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       this.logger.error('Failed to execute market creation', error.message);
       throw new BadRequestException(`On-chain error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Saves the market metadata to Supabase and a local JSON file.
+   */
+  private async saveMarketMetadata(data: {
+    conditionId: string;
+    question: string;
+    description: string;
+    endTime: number;
+    creator: string;
+    collateralToken: string;
+  }) {
+    const marketRow = {
+      market_address: data.conditionId,
+      question: data.question,
+      market_endTime: new Date(data.endTime * 1000).toISOString(),
+      creator: data.creator,
+      market_createdTime: new Date().toISOString(),
+      yes_token_supply: '0',
+      no_token_supply: '0',
+    };
+
+    // 1. Save to Supabase
+    try {
+      const { error } = await this.supabase
+        .getClawdbetClient()
+        .from(this.supabase.writeTable)
+        .insert([marketRow]);
+      
+      if (error) {
+        this.logger.warn(`Failed to save to Supabase: ${error.message}`);
+      } else {
+        this.logger.log(`Market ${data.conditionId} saved to Supabase`);
+      }
+    } catch (e) {
+      this.logger.warn(`Supabase error: ${e.message}`);
+    }
+
+    // 2. Save to Local JSON
+    try {
+      let markets: any[] = [];
+      if (fs.existsSync(this.jsonFilePath)) {
+        const fileContent = fs.readFileSync(this.jsonFilePath, 'utf8');
+        try {
+          markets = JSON.parse(fileContent);
+        } catch (e) {
+          markets = [];
+        }
+      }
+      markets.push({ ...marketRow, description: data.description, collateralToken: data.collateralToken });
+      fs.writeFileSync(this.jsonFilePath, JSON.stringify(markets, null, 2));
+      this.logger.log(`Market ${data.conditionId} saved to local JSON`);
+    } catch (e) {
+      this.logger.error(`Failed to save to JSON file: ${e.message}`);
     }
   }
 

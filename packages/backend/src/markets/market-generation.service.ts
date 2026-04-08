@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
 import axios from 'axios';
@@ -69,10 +69,12 @@ export class MarketGenerationService {
               Your goal is to judge if a user's question can be objectively verified and then generate market parameters.
               
               Guidelines:
-              1. FIRST, judge if the question is 'resolvable' (can be verified by a neutral third-party source).
-              2. The 'question' must be binary (Yes/No) and extremely clear.
-              3. The 'description' should define specific resolution criteria and edge cases.
-              4. The 'resolutionSource' must be a reliable, public website or API.
+              1. FIRST, judge if the question is 'resolvable' (can objectively be verified by a neutral third-party source AFTER the event occurs).
+              2. Do NOT reject an event just because it is in the future.
+              3. The 'question' must be binary (Yes/No) and extremely clear.
+              4. The 'description' should define specific resolution criteria and edge cases.
+              5. The 'resolutionSource' must be a reliable, public website or API.
+              6. Calculate 'endTime' precisely as the Unix timestamp (in seconds) when the event is expected to be finalized.
               
               OUTPUT FORMAT:
               You MUST respond with a valid JSON object matching this schema:
@@ -108,11 +110,28 @@ export class MarketGenerationService {
           messages: [
             {
               role: 'system',
-              content: `You are an expert prediction market architect. Use the schema for output.`,
+              content: `You are an expert prediction market architect. 
+              Respond in JSON format using this exact schema:
+              {
+                "resolvable": boolean,
+                "reason": string (if not resolvable),
+                "question": string,
+                "description": string,
+                "endTime": number (Unix timestamp in seconds),
+                "resolutionSource": string,
+                "category": "crypto" | "sports" | "politics" | "entertainment" | "other"
+              }
+              Return "resolvable": true if the question is binary (Yes/No) and can be objectively verified by public news or data AT THE TIME THE EVENT CONCLUDES. 
+              Do not reject events just because they are in the future; our system will resolve them when the time comes.
+              
+              Calculate "endTime" precisely as the Unix timestamp (in seconds) when the event is expected to be finalized.
+
+              Current Time: ${new Date().toISOString()}`,
             },
             { role: 'user', content: prompt }
           ],
           response_format: { type: 'json_object' },
+          max_tokens: Number(this.config.get<string>('LLM_MAX_TOKENS')) || 1000,
         }, {
           headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' }
         });
@@ -121,8 +140,9 @@ export class MarketGenerationService {
         return this.ensureFutureEndTime(data);
       }
     } catch (err) {
-      this.logger.error(`Generation Failed: ${err.response?.data?.error?.message || err.message}`);
-      throw err;
+      const apiError = err.response?.data?.error?.message || err.response?.data?.error || err.message;
+      this.logger.error(`Generation Failed: ${apiError}`);
+      throw new BadRequestException(`AI Generation Failed: ${apiError}`);
     }
   }
 
@@ -168,6 +188,7 @@ export class MarketGenerationService {
       const response = await axios.post(endpoint, {
         model: model,
         messages: [{ role: 'user', content: prompt }],
+        max_tokens: Number(this.config.get<string>('LLM_MAX_TOKENS')) || 1000,
       }, {
         headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' }
       });
