@@ -2,7 +2,7 @@ import { Controller, Get, Query, Param, BadRequestException } from '@nestjs/comm
 import { HeyElsaService } from './heyelsa.service';
 
 /**
- * HeyElsa x402 endpoints — DeFi market intelligence for SigmaBet.
+ * HeyElsa x402 endpoints for OpenBet market intelligence.
  *
  * Powered by HeyElsa's pay-per-call x402 protocol.
  * @see https://x402.heyelsa.ai

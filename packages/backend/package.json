@@ -1,5 +1,5 @@
 {
-  "name": "@clawdbet/backend",
+  "name": "@openbet/backend",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -18,7 +18,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "backfill-clawdbet": "ts-node -r dotenv/config scripts/backfill-clawdbet.ts"
+    "backfill-openbet": "ts-node -r dotenv/config scripts/backfill-openbet.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

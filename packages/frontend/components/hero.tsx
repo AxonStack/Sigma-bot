@@ -1,213 +1,119 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import { FACTORY_ABI } from "@/lib/abi/abi";
+import Link from "next/link";
+import { motion } from "framer-motion";
 import { CreateMarketModal } from "./create-market-modal";
+
+const heroStats = [
+  { label: "Launch time", value: "< 60 sec" },
+  { label: "Network", value: "Base" },
+  { label: "Liquidity", value: "Instant" },
+];
 
 export function Hero() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="hero-noise hero-spotlight relative overflow-hidden px-6 pb-24 pt-36 sm:px-8 md:pb-28 md:pt-40">
       <CreateMarketModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      {/* Base gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-ice-deep via-ice to-white" />
 
-      {/* Grid pattern */}
-      <div className="absolute inset-0 bg-grid opacity-60" />
-
-      {/* Floating mesh blobs */}
+      <div className="absolute inset-0 bg-grid opacity-[0.06]" />
       <div
-        className="absolute top-16 -left-32 w-[500px] h-[500px] blob opacity-60"
-        style={{ background: "rgba(0,82,255,0.12)" }}
+        className="blob absolute -left-16 top-24 h-[300px] w-[300px] opacity-40"
+        style={{ background: "rgba(255, 40, 96, 0.32)" }}
       />
       <div
-        className="absolute -top-20 right-0 w-[400px] h-[400px] blob-slow opacity-50"
-        style={{ background: "rgba(6,182,212,0.1)" }}
+        className="blob-slow absolute right-[-40px] top-10 h-[320px] w-[320px] opacity-35"
+        style={{ background: "rgba(255, 112, 176, 0.28)" }}
       />
       <div
-        className="absolute bottom-32 left-1/3 w-[350px] h-[350px] blob opacity-40"
+        className="absolute inset-x-0 top-0 h-[420px]"
         style={{
-          background: "rgba(232,89,79,0.08)",
-          animationDelay: "-8s",
+          background:
+            "radial-gradient(circle at 50% 0%, rgba(255, 42, 104, 0.24), transparent 50%)",
         }}
       />
-      <div
-        className="absolute bottom-0 right-1/4 w-[300px] h-[300px] blob-slow opacity-30"
-        style={{ background: "rgba(245,166,35,0.08)" }}
-      />
 
-      {/* Wave decoration */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <svg
-          viewBox="0 0 1440 120"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0 60C240 20 480 100 720 60C960 20 1200 100 1440 60V120H0V60Z"
-            fill="white"
-            fillOpacity="0.5"
-          />
-          <path
-            d="M0 80C240 40 480 120 720 80C960 40 1200 120 1440 80V120H0V80Z"
-            fill="white"
-          />
-        </svg>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 max-w-5xl mx-auto px-6 pt-28 pb-36 text-center">
-        {/* Logo with glow ring */}
+      <div className="relative mx-auto max-w-6xl">
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-10"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
+          className="mx-auto max-w-4xl text-center"
         >
-          <div className="animate-float inline-block relative">
-            {/* Glow ring */}
-            <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-base-blue/20 via-cyan/10 to-coral/10 blur-xl animate-pulse-ring" />
-            <Image
-              src="/logo.png"
-              alt="SigmaBet"
-              width={150}
-              height={150}
-              priority
-              className="relative rounded-3xl shadow-2xl shadow-base-blue/20"
-            />
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.28em] text-white/60">
+            <span className="h-2 w-2 rounded-full bg-[#ff5e8f] shadow-[0_0_14px_rgba(255,94,143,0.8)]" />
+            OpenBet live on Base
+          </div>
+
+          <h1 className="font-display text-[3.1rem] leading-[0.95] tracking-[-0.05em] text-white sm:text-[4.6rem] md:text-[6.3rem]">
+            Markets with
+            <br />
+            <span className="gradient-text">less noise, more conviction.</span>
+          </h1>
+
+          <p className="mx-auto mt-7 max-w-2xl text-base leading-8 text-white/68 sm:text-lg">
+            OpenBet turns clear questions into live prediction markets with a cleaner launch flow,
+            faster liquidity, and a trading surface that feels sharper from the first second.
+          </p>
+
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="button-primary w-full rounded-full px-7 py-4 text-sm font-semibold uppercase tracking-[0.2em] sm:w-auto"
+            >
+              Launch a market
+            </button>
+            <Link
+              href="/markets"
+              className="button-secondary w-full rounded-full px-7 py-4 text-sm font-semibold uppercase tracking-[0.2em] sm:w-auto"
+            >
+              Explore markets
+            </Link>
           </div>
         </motion.div>
 
-        {/* Badge */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.6 }}
-          className="mb-8"
+          transition={{ delay: 0.12, duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
+          className="mx-auto mt-16 max-w-4xl"
         >
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-base-blue/10 text-base-blue text-xs font-semibold tracking-widest uppercase shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            Live on Base &middot; Agent #14493
-          </span>
-        </motion.div>
+          <div className="rounded-[32px] border border-white/10 bg-white/[0.03] p-4 shadow-[0_24px_90px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/8 pb-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.28em] text-white/38">Live tape</p>
+                <p className="mt-2 text-xl font-semibold text-white sm:text-2xl">
+                  Will ETH reclaim a yearly high before June closes?
+                </p>
+              </div>
+              <div className="rounded-full border border-[#ff7aa7]/30 bg-[#ff4677]/12 px-4 py-2 text-right">
+                <p className="text-[11px] uppercase tracking-[0.26em] text-[#ffc0d4]">Yes</p>
+                <p className="text-2xl font-semibold text-white">61.4%</p>
+              </div>
+            </div>
 
-        {/* Headline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            delay: 0.3,
-            duration: 0.8,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[1.05] tracking-tight text-navy mb-6"
-        >
-          Any Question.
-          <br />
-          <span className="gradient-text">Instant Market.</span>
-          <br />
-          Zero Cold Start.
-        </motion.h1>
-
-        {/* Subtext */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-          className="text-lg md:text-xl text-slate max-w-2xl mx-auto mb-10 leading-relaxed"
-        >
-          SigmaBet is an AI agent that creates prediction markets on demand
-          &mdash; instantly tradeable with guaranteed liquidity in{" "}
-          <span className="text-navy font-semibold">$CLAWDBET</span>. No
-          gatekeepers. No approvals. No cold starts.
-        </motion.p>
-
-        {/* CTAs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.65, duration: 0.6 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
-        >
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-gradient-to-r from-base-blue to-cyan text-white text-base font-semibold rounded-full shadow-[0_0_30px_rgba(0,82,255,0.3)] hover:shadow-[0_0_50px_rgba(0,82,255,0.45)] transition-all duration-300 active:scale-[0.97]"
-          >
-            Create a Prediction Market
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M1 8h14m0 0l-5-5m5 5l-5 5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <a
-            href="https://flaunch.gg/base/coin/0x5178f9df8274d76841aadb13f22e0f7fa7f219a0"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 glass text-navy text-base font-semibold rounded-full border border-navy/10 hover:border-base-blue/30 hover:shadow-lg transition-all duration-300 active:scale-[0.97]"
-          >
-            Trade $CLAWDBET
-          </a>
-        </motion.div>
-
-        {/* Community link */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.85, duration: 0.6 }}
-          className="mt-6"
-        >
-          <a
-            href="https://x.com/clawbetonbase"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm text-slate hover:text-base-blue transition-colors duration-200"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
-            Join the community &mdash; @clawbetonbase
-          </a>
-        </motion.div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
-          className="absolute bottom-12 left-1/2 -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <svg
-              width="20"
-              height="28"
-              viewBox="0 0 20 28"
-              fill="none"
-              className="text-slate/40"
-            >
-              <rect
-                x="1"
-                y="1"
-                width="18"
-                height="26"
-                rx="9"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <circle cx="10" cy="9" r="2" fill="currentColor" />
-            </svg>
-          </motion.div>
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              {heroStats.map((stat, index) => (
+                <div key={stat.label} className="relative">
+                  <div className="absolute inset-x-0 top-0 h-px minimal-divider" />
+                  <div className="pt-4">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-white/38">
+                      {stat.label}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-white">
+                      {stat.value}
+                    </p>
+                  </div>
+                  {index < heroStats.length - 1 && (
+                    <div className="absolute right-0 top-4 hidden h-10 w-px bg-white/8 sm:block" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </motion.div>
       </div>
     </section>

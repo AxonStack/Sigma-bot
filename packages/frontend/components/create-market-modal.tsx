@@ -1,16 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useWriteContract } from "wagmi";
 import { parseUnits } from "viem";
-import { baseSepolia } from "wagmi/chains";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_CLAWDBET_MARKET_SERVICE_URL;
-const BACKEND_WALLET = process.env.NEXT_PUBLIC_BACKEND_WALLET_ADDRESS;
-const SIGMA_ADDRESS = process.env.NEXT_PUBLIC_SIGMA_ADDRESS as `0x${string}`;
-const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`;
+function cleanEnv(value: string | undefined): string {
+  return (value ?? "").trim();
+}
+
+const BACKEND_URL = cleanEnv(
+  process.env.NEXT_PUBLIC_OPENBET_MARKET_SERVICE_URL ??
+    process.env.OPENBET_MARKET_SERVICE_URL ??
+    process.env.NEXT_PUBLIC_CLAWDBET_MARKET_SERVICE_URL ??
+    process.env.CLAWDBET_MARKET_SERVICE_URL
+);
+const BACKEND_WALLET = cleanEnv(
+  process.env.NEXT_PUBLIC_OPENBET_BACKEND_WALLET_ADDRESS ??
+    process.env.NEXT_PUBLIC_BACKEND_WALLET_ADDRESS
+);
+const OPENBET_ADDRESS = cleanEnv(
+  process.env.NEXT_PUBLIC_OPENBET_TOKEN_ADDRESS ??
+    process.env.NEXT_PUBLIC_SIGMA_ADDRESS
+) as `0x${string}`;
+const USDC_ADDRESS = cleanEnv(process.env.NEXT_PUBLIC_USDC_ADDRESS) as `0x${string}`;
 const GENERATION_FEE_USDC = "5"; // 5 USDC fee
 
 interface GeneratedMarket {
@@ -33,7 +47,10 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
   const { writeContractAsync } = useWriteContract();
 
   const handleGenerateAndDeploy = async () => {
-    if (!prompt.trim() || !BACKEND_WALLET || !SIGMA_ADDRESS) return;
+    if (!prompt.trim() || !BACKEND_URL || !BACKEND_WALLET || !OPENBET_ADDRESS || !USDC_ADDRESS) {
+      setError("OpenBet env configuration is incomplete.");
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -83,14 +100,19 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
       setPhase("Deploying to Base Sepolia...");
       const execResponse = await axios.post(`${BACKEND_URL}/markets/execute-creation`, {
         ...marketData,
-        collateralToken: SIGMA_ADDRESS,
+        collateralToken: OPENBET_ADDRESS,
         initialLiquidity: "100", 
         userPaymentTxHash: tx,
       });
 
       setTxHash(execResponse.data.txHash);
-    } catch (err: any) {
-      setError(err.message || "Process failed. Ensure you have USDC balance and approved the transaction.");
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message || err.message
+        : err instanceof Error
+          ? err.message
+          : "Process failed. Ensure you have USDC balance and approved the transaction.";
+      setError(message);
     } finally {
       setLoading(false);
       setPhase("");

@@ -1,6 +1,6 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+import { http } from "viem";
 import { baseSepolia } from "wagmi/chains";
-import { http, createStorage, cookieStorage } from "wagmi";
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
 if (!projectId?.trim()) {
@@ -10,7 +10,7 @@ if (!projectId?.trim()) {
 }
 
 export const config = getDefaultConfig({
-  appName: "ClawdBet",
+  appName: "OpenBet",
   projectId,
   chains: [baseSepolia],
   ssr: true,

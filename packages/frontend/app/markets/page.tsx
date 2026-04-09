@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/navbar";
@@ -16,8 +16,8 @@ type Market = {
   no_odds?: number;
 };
 
-function conditionIdFromAddress(market_address: string): string {
-  return market_address.startsWith("0x") ? market_address.slice(2) : market_address;
+function conditionIdFromAddress(marketAddress: string): string {
+  return marketAddress.startsWith("0x") ? marketAddress.slice(2) : marketAddress;
 }
 
 function extractDateFromQuestion(question: string): string | null {
@@ -46,12 +46,15 @@ function parseEndDate(market: Market): Date | null {
   return null;
 }
 
-function formatTimeLeft(market: Market): { primary: string; secondary: string; under48h: boolean } | null {
+function formatTimeLeft(
+  market: Market
+): { primary: string; secondary: string; under48h: boolean } | null {
   const d = parseEndDate(market);
   if (!d) return null;
   const now = Date.now();
   const ms = d.getTime() - now;
   const under48h = ms > 0 && ms < 48 * 60 * 60 * 1000;
+
   let primary: string;
   if (ms <= 0) {
     primary = "Ended";
@@ -68,12 +71,14 @@ function formatTimeLeft(market: Market): { primary: string; secondary: string; u
       primary = `${hours}h`;
     }
   }
+
   const secondary = d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
     timeZone: "UTC",
   });
+
   return { primary, secondary, under48h };
 }
 
@@ -88,6 +93,7 @@ export default function MarketsPage() {
 
   useEffect(() => {
     let cancelled = false;
+
     fetch(MARKETS_API)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -102,144 +108,129 @@ export default function MarketsPage() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const liveCount = markets.filter((m) => {
-    const tl = formatTimeLeft(m);
+  const liveCount = markets.filter((market) => {
+    const tl = formatTimeLeft(market);
     return tl && tl.primary !== "Ended";
   }).length;
 
   const totalPages = Math.max(1, Math.ceil(markets.length / PAGE_SIZE));
   const effectivePage = Math.min(page, totalPages);
-  const paginatedMarkets = markets.slice(
-    (effectivePage - 1) * PAGE_SIZE,
-    effectivePage * PAGE_SIZE
-  );
+  const paginatedMarkets = markets.slice((effectivePage - 1) * PAGE_SIZE, effectivePage * PAGE_SIZE);
 
   return (
-    <main className="min-h-screen relative overflow-hidden">
-      {/* Background layers */}
-      <div className="absolute inset-0 bg-gradient-to-b from-ice-deep via-ice to-white" />
-      <div className="absolute inset-0 bg-grid opacity-70" />
+    <main className="relative min-h-screen overflow-hidden bg-[#050103] text-white">
+      <div className="absolute inset-0 bg-grid opacity-[0.05]" />
       <div
-        className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full opacity-25 blur-3xl blob-slow pointer-events-none"
-        style={{ background: "rgba(0,82,255,0.07)" }}
+        className="pointer-events-none absolute right-0 top-0 h-[500px] w-[500px] rounded-full opacity-25 blur-3xl blob-slow"
+        style={{ background: "rgba(255, 59, 107, 0.16)" }}
       />
       <div
-        className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-20 blur-3xl blob-slow pointer-events-none"
-        style={{ background: "rgba(6,182,212,0.08)" }}
+        className="pointer-events-none absolute bottom-0 left-0 h-[420px] w-[420px] rounded-full opacity-20 blur-3xl blob-slow"
+        style={{ background: "rgba(127, 29, 29, 0.18)" }}
       />
 
       <Navbar />
 
-      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-20 md:pt-24 pb-16">
-        {/* ── Header ── */}
-        <div className="flex items-end justify-between mb-4">
-          <h1 className="font-display text-xl md:text-2xl text-navy tracking-tight leading-none">
-            Markets
-          </h1>
-          {!loading && !error && markets.length > 0 && (
-            <div className="flex items-center gap-4 text-xs tabular-nums select-none">
-              <span className="text-slate">{markets.length} total</span>
-              <span className="flex items-center gap-1.5 text-navy font-medium">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-                </span>
-                {liveCount} live
-              </span>
-
-              {/* View toggle */}
-              <div className="flex items-center rounded-lg border border-navy/[0.08] bg-white overflow-hidden ml-1">
-                <button
-                  onClick={() => setView("list")}
-                  className={[
-                    "p-1.5 transition-colors duration-100",
-                    view === "list"
-                      ? "bg-base-blue text-white"
-                      : "text-slate hover:text-navy",
-                  ].join(" ")}
-                  aria-label="List view"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setView("grid")}
-                  className={[
-                    "p-1.5 transition-colors duration-100",
-                    view === "grid"
-                      ? "bg-base-blue text-white"
-                      : "text-slate hover:text-navy",
-                  ].join(" ")}
-                  aria-label="Grid view"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-                  </svg>
-                </button>
-              </div>
+      <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6 md:pt-28">
+        <div className="mb-8">
+          <p className="text-[11px] uppercase tracking-[0.28em] text-white/38">OpenBet board</p>
+          <div className="mt-3 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h1 className="font-display text-3xl tracking-tight text-white md:text-4xl">
+                Live markets
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-white/56">
+                The market board now follows the landing-page shell: dark base, quieter cards, green for
+                yes, red for no.
+              </p>
             </div>
-          )}
+
+            {!loading && !error && markets.length > 0 && (
+              <div className="flex flex-wrap items-center gap-4 text-xs tabular-nums">
+                <span className="text-white/55">{markets.length} total</span>
+                <span className="flex items-center gap-1.5 font-medium text-white">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+                  </span>
+                  {liveCount} live
+                </span>
+
+                <div className="ml-1 flex items-center overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
+                  <button
+                    onClick={() => setView("list")}
+                    className={[
+                      "p-1.5 transition-colors duration-100",
+                      view === "list" ? "bg-white text-black" : "text-white/55 hover:text-white",
+                    ].join(" ")}
+                    aria-label="List view"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setView("grid")}
+                    className={[
+                      "p-1.5 transition-colors duration-100",
+                      view === "grid" ? "bg-white text-black" : "text-white/55 hover:text-white",
+                    ].join(" ")}
+                    aria-label="Grid view"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* ── Loading ── */}
         {loading && (
           <div className="flex items-center justify-center py-24">
-            <div className="w-6 h-6 rounded-full border-2 border-base-blue border-t-transparent animate-spin" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
           </div>
         )}
 
-        {/* ── Error ── */}
         {error && (
-          <div className="rounded-lg bg-white border border-coral/20 p-5 text-center">
-            <p className="font-semibold text-sm text-navy">Could not load markets</p>
-            <p className="text-xs text-slate mt-1">{error}</p>
+          <div className="rounded-2xl border border-red-500/20 bg-white/[0.04] p-5 text-center backdrop-blur-xl">
+            <p className="text-sm font-semibold text-white">Could not load markets</p>
+            <p className="mt-1 text-xs text-white/55">{error}</p>
           </div>
         )}
 
-        {/* ── Empty ── */}
         {!loading && !error && markets.length === 0 && (
-          <div className="rounded-lg bg-white border border-navy/[0.08] p-8 text-center">
-            <p className="font-semibold text-sm text-navy">No markets yet</p>
-            <p className="text-xs text-slate mt-1">Markets will appear here once created.</p>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur-xl">
+            <p className="text-sm font-semibold text-white">No markets yet</p>
+            <p className="mt-1 text-xs text-white/55">Markets will appear here once created.</p>
           </div>
         )}
 
-        {/* ── Markets ── */}
         {!loading && !error && markets.length > 0 && (
           <>
-            {/* ═══ LIST VIEW ═══ */}
             {view === "list" && (
               <>
-                {/* Column headers — desktop */}
-                <div className="hidden md:grid grid-cols-[1fr_72px_72px_92px_28px] gap-3 items-center px-5 pb-2">
-                  <span className="text-[10px] font-bold text-slate/60 uppercase tracking-[0.14em]">
-                    Market
-                  </span>
-                  <span className="text-[10px] font-bold text-slate/60 uppercase tracking-[0.14em] text-center">
-                    Yes
-                  </span>
-                  <span className="text-[10px] font-bold text-slate/60 uppercase tracking-[0.14em] text-center">
-                    No
-                  </span>
-                  <span className="text-[10px] font-bold text-slate/60 uppercase tracking-[0.14em] text-right">
-                    Expires
-                  </span>
+                <div className="hidden grid-cols-[1fr_72px_72px_92px_28px] items-center gap-3 px-5 pb-2 md:grid">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">Market</span>
+                  <span className="text-center text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-300/70">Yes</span>
+                  <span className="text-center text-[10px] font-bold uppercase tracking-[0.14em] text-red-300/70">No</span>
+                  <span className="text-right text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">Expires</span>
                   <span />
                 </div>
 
-                {/* Row container */}
-                <div className="bg-white rounded-xl border border-navy/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
                   {paginatedMarkets.map((market, i) => {
                     const yesPercent = typeof market.yes_odds === "number" ? market.yes_odds : 50;
                     const noPercent = typeof market.no_odds === "number" ? market.no_odds : 50;
                     const hasOdds = market.yes_odds != null || market.no_odds != null;
-                    const isVolatile = hasOdds && yesPercent >= 45 && yesPercent <= 55;
+                    const isBalanced = hasOdds && yesPercent >= 45 && yesPercent <= 55;
                     const timeLeft = formatTimeLeft(market);
                     const isEnded = timeLeft?.primary === "Ended";
 
@@ -249,164 +240,95 @@ export default function MarketsPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.15, delay: i * 0.02 }}
-                        className={i > 0 ? "border-t border-navy/[0.05]" : ""}
+                        className={i > 0 ? "border-t border-white/8" : ""}
                       >
                         <Link
                           href={`/market/${conditionIdFromAddress(market.market_address)}`}
                           className={[
-                            "block md:grid md:grid-cols-[1fr_72px_72px_92px_28px] md:gap-3 md:items-center",
-                            "px-5 py-3.5",
-                            "border-l-[3px] border-l-transparent",
-                            "transition-all duration-100",
-                            "hover:bg-ice/80 hover:border-l-base-blue",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-base-blue/30 focus-visible:ring-inset",
-                            "group cursor-pointer",
+                            "block border-l-[3px] border-l-transparent px-5 py-3.5 transition-all duration-100 group cursor-pointer",
+                            "md:grid md:grid-cols-[1fr_72px_72px_92px_28px] md:items-center md:gap-3",
+                            "hover:border-l-emerald-400 hover:bg-white/[0.03]",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/30 focus-visible:ring-inset",
                             isEnded ? "opacity-50 hover:opacity-70" : "",
                           ].join(" ")}
                         >
-                          {/* Question column */}
                           <div className="min-w-0 pr-2">
                             <div className="flex items-start gap-2">
                               <p
                                 className={[
-                                  "text-[13px] leading-[1.45] font-medium text-navy",
-                                  "group-hover:text-base-blue transition-colors duration-100",
-                                  "line-clamp-2",
-                                  isEnded ? "line-through decoration-navy/20" : "",
+                                  "line-clamp-2 text-[13px] font-medium leading-[1.45] text-white transition-colors duration-100",
+                                  "group-hover:text-white/80",
+                                  isEnded ? "line-through decoration-white/20" : "",
                                 ].join(" ")}
                               >
                                 {market.question}
                               </p>
-                              {isVolatile && !isEnded && (
-                                <span className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-gold/15 text-gold leading-none">
-                                  Hot
+                              {isBalanced && !isEnded && (
+                                <span className="mt-0.5 shrink-0 rounded bg-white/8 px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none tracking-wider text-white/72">
+                                  Tight
                                 </span>
                               )}
                             </div>
 
-                            {/* Mobile: prices + time inline */}
-                            <div className="flex items-center gap-2 mt-2.5 md:hidden">
+                            <div className="mt-2.5 flex items-center gap-2 md:hidden">
                               {hasOdds ? (
                                 <>
-                                  <span
-                                    className={[
-                                      "inline-flex items-center rounded px-2 py-0.5",
-                                      "text-xs font-bold tabular-nums leading-none",
-                                      isEnded
-                                        ? "bg-navy/[0.04] text-slate-light"
-                                        : "bg-base-blue/[0.1] text-base-blue",
-                                    ].join(" ")}
-                                  >
+                                  <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-bold leading-none tabular-nums ${isEnded ? "bg-white/[0.05] text-white/40" : "bg-emerald-500/12 text-emerald-300"}`}>
                                     Yes {yesPercent}%
                                   </span>
-                                  <span
-                                    className={[
-                                      "inline-flex items-center rounded px-2 py-0.5",
-                                      "text-xs font-bold tabular-nums leading-none",
-                                      isEnded
-                                        ? "bg-navy/[0.04] text-slate-light"
-                                        : "bg-coral/[0.08] text-coral",
-                                    ].join(" ")}
-                                  >
+                                  <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-bold leading-none tabular-nums ${isEnded ? "bg-white/[0.05] text-white/40" : "bg-red-500/12 text-red-300"}`}>
                                     No {noPercent}%
                                   </span>
                                 </>
                               ) : (
-                                <span className="text-[11px] text-slate-light">No odds</span>
+                                <span className="text-[11px] text-white/35">No odds</span>
                               )}
+
                               {timeLeft && (
-                                <span
-                                  className={[
-                                    "ml-auto text-[11px] font-semibold tabular-nums",
-                                    isEnded
-                                      ? "text-slate-light"
-                                      : timeLeft.under48h
-                                        ? "text-amber-600"
-                                        : "text-slate",
-                                  ].join(" ")}
-                                >
+                                <span className={`ml-auto text-[11px] font-semibold tabular-nums ${isEnded ? "text-white/35" : timeLeft.under48h ? "text-amber-300" : "text-white/60"}`}>
                                   {isEnded ? "Closed" : timeLeft.primary}
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          {/* Yes price — desktop */}
-                          <div className="hidden md:flex justify-center">
+                          <div className="hidden justify-center md:flex">
                             {hasOdds ? (
-                              <span
-                                className={[
-                                  "inline-flex items-center justify-center min-w-[52px]",
-                                  "rounded-md px-2 py-1",
-                                  "text-[15px] font-bold tabular-nums leading-none",
-                                  "transition-colors duration-100",
-                                  isEnded
-                                    ? "bg-navy/[0.04] text-slate-light"
-                                    : "bg-base-blue/[0.08] text-base-blue group-hover:bg-base-blue/[0.16]",
-                                ].join(" ")}
-                              >
+                              <span className={`inline-flex min-w-[52px] items-center justify-center rounded-md px-2 py-1 text-[15px] font-bold leading-none tabular-nums ${isEnded ? "bg-white/[0.05] text-white/40" : "bg-emerald-500/12 text-emerald-300 group-hover:bg-emerald-500/18"}`}>
                                 {yesPercent}%
                               </span>
                             ) : (
-                              <span className="text-xs text-slate-light">—</span>
+                              <span className="text-xs text-white/35">—</span>
                             )}
                           </div>
 
-                          {/* No price — desktop */}
-                          <div className="hidden md:flex justify-center">
+                          <div className="hidden justify-center md:flex">
                             {hasOdds ? (
-                              <span
-                                className={[
-                                  "inline-flex items-center justify-center min-w-[52px]",
-                                  "rounded-md px-2 py-1",
-                                  "text-[15px] font-bold tabular-nums leading-none",
-                                  "transition-colors duration-100",
-                                  isEnded
-                                    ? "bg-navy/[0.04] text-slate-light"
-                                    : "bg-coral/[0.06] text-coral group-hover:bg-coral/[0.13]",
-                                ].join(" ")}
-                              >
+                              <span className={`inline-flex min-w-[52px] items-center justify-center rounded-md px-2 py-1 text-[15px] font-bold leading-none tabular-nums ${isEnded ? "bg-white/[0.05] text-white/40" : "bg-red-500/12 text-red-300 group-hover:bg-red-500/18"}`}>
                                 {noPercent}%
                               </span>
                             ) : (
-                              <span className="text-xs text-slate-light">—</span>
+                              <span className="text-xs text-white/35">—</span>
                             )}
                           </div>
 
-                          {/* Expires — desktop */}
-                          <div className="hidden md:block text-right">
+                          <div className="hidden text-right md:block">
                             {timeLeft ? (
                               <>
-                                <p
-                                  className={[
-                                    "text-xs font-semibold tabular-nums leading-none",
-                                    isEnded
-                                      ? "text-slate-light"
-                                      : timeLeft.under48h
-                                        ? "text-amber-600"
-                                        : "text-navy",
-                                  ].join(" ")}
-                                >
+                                <p className={`text-xs font-semibold leading-none tabular-nums ${isEnded ? "text-white/35" : timeLeft.under48h ? "text-amber-300" : "text-white"}`}>
                                   {isEnded ? "Closed" : timeLeft.primary}
                                 </p>
-                                <p className="mt-1 text-[10px] text-slate-light/70 leading-none tabular-nums">
+                                <p className="mt-1 text-[10px] leading-none tabular-nums text-white/35">
                                   {timeLeft.secondary}
                                 </p>
                               </>
                             ) : (
-                              <span className="text-[10px] text-slate-light">—</span>
+                              <span className="text-[10px] text-white/35">—</span>
                             )}
                           </div>
 
-                          {/* Chevron — desktop */}
-                          <div className="hidden md:flex justify-end">
-                            <svg
-                              className="w-3.5 h-3.5 text-slate-light/40 group-hover:text-base-blue group-hover:translate-x-0.5 transition-all duration-100"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2.5}
-                            >
+                          <div className="hidden justify-end md:flex">
+                            <svg className="h-3.5 w-3.5 text-white/28 transition-all duration-100 group-hover:translate-x-0.5 group-hover:text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                             </svg>
                           </div>
@@ -418,14 +340,12 @@ export default function MarketsPage() {
               </>
             )}
 
-            {/* ═══ GRID / CARD VIEW ═══ */}
             {view === "grid" && (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {paginatedMarkets.map((market, i) => {
                   const yesPercent = typeof market.yes_odds === "number" ? market.yes_odds : 50;
                   const noPercent = typeof market.no_odds === "number" ? market.no_odds : 50;
                   const hasOdds = market.yes_odds != null || market.no_odds != null;
-                  const isVolatile = hasOdds && yesPercent >= 45 && yesPercent <= 55;
                   const timeLeft = formatTimeLeft(market);
                   const isEnded = timeLeft?.primary === "Ended";
 
@@ -439,31 +359,18 @@ export default function MarketsPage() {
                       <Link
                         href={`/market/${conditionIdFromAddress(market.market_address)}`}
                         className={[
-                          "flex flex-col rounded-xl bg-white border border-navy/[0.08] overflow-hidden",
-                          "shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
-                          "h-full",
-                          "transition-all duration-150 group cursor-pointer",
-                          "hover:shadow-[0_8px_24px_rgba(0,82,255,0.1)] hover:border-base-blue/25",
-                          "hover:-translate-y-0.5",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-base-blue/30",
+                          "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl",
+                          "shadow-[0_18px_60px_rgba(0,0,0,0.28)] transition-all duration-150",
+                          "hover:-translate-y-0.5 hover:border-white/16 hover:shadow-[0_18px_50px_rgba(0,0,0,0.34)]",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/30",
                           isEnded ? "opacity-50 hover:opacity-70" : "",
                         ].join(" ")}
                       >
-                        {/* Header strip: time + status */}
-                        <div className="flex items-center justify-between px-4 py-2 bg-navy/[0.02] border-b border-navy/[0.05]">
+                        <div className="flex items-center justify-between border-b border-white/8 bg-white/[0.03] px-4 py-2">
                           {timeLeft ? (
-                            <span
-                              className={[
-                                "text-[11px] font-semibold tabular-nums flex items-center gap-1.5",
-                                isEnded
-                                  ? "text-slate-light"
-                                  : timeLeft.under48h
-                                    ? "text-amber-600"
-                                    : "text-slate",
-                              ].join(" ")}
-                            >
+                            <span className={`flex items-center gap-1.5 text-[11px] font-semibold tabular-nums ${isEnded ? "text-white/35" : timeLeft.under48h ? "text-amber-300" : "text-white/55"}`}>
                               {!isEnded && (
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
                                 </svg>
                               )}
@@ -472,98 +379,65 @@ export default function MarketsPage() {
                           ) : (
                             <span />
                           )}
-                          <div className="flex items-center gap-2">
-                            {isVolatile && !isEnded && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-gold/15 text-gold leading-none">
-                                Hot
-                              </span>
-                            )}
-                            {!isEnded && (
-                              <span className="flex items-center gap-1 text-[10px] text-green-600 font-medium">
-                                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                Live
-                              </span>
-                            )}
-                          </div>
+
+                          {!isEnded && (
+                            <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-300">
+                              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                              Live
+                            </span>
+                          )}
                         </div>
 
-                        {/* Question */}
-                        <div className="px-4 pt-3.5 pb-2">
-                          <p
-                            className={[
-                              "text-[13px] leading-[1.5] font-medium text-navy",
-                              "group-hover:text-base-blue transition-colors duration-100",
-                              "line-clamp-2",
-                              isEnded ? "line-through decoration-navy/20" : "",
-                            ].join(" ")}
-                          >
+                        <div className="px-4 pb-2 pt-4">
+                          <p className={`line-clamp-2 text-[13px] font-medium leading-[1.5] text-white transition-colors duration-100 group-hover:text-white/80 ${isEnded ? "line-through decoration-white/20" : ""}`}>
                             {market.question}
                           </p>
                         </div>
 
-                        {/* Spacer */}
                         <div className="flex-1" />
 
-                        {/* Yes / No action boxes + probability bar */}
-                        {hasOdds && (
+                        {hasOdds ? (
                           <div className="px-4 pb-4">
                             <div className="grid grid-cols-2 gap-2">
-                              <div
-                                className={[
-                                  "flex flex-col items-center rounded-lg py-2.5 transition-colors duration-100",
-                                  isEnded
-                                    ? "bg-navy/[0.03]"
-                                    : "bg-base-blue/[0.06] group-hover:bg-base-blue/[0.12]",
-                                ].join(" ")}
-                              >
-                                <span className="text-[10px] font-semibold uppercase tracking-wider text-base-blue/60 mb-0.5">
+                              <div className={`flex flex-col items-center rounded-lg py-2.5 ${isEnded ? "bg-white/[0.04]" : "bg-emerald-500/10 group-hover:bg-emerald-500/14"}`}>
+                                <span className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300/70">
                                   Yes
                                 </span>
-                                <span
-                                  className={[
-                                    "font-display text-lg font-bold tabular-nums leading-none",
-                                    isEnded ? "text-slate-light" : "text-base-blue",
-                                  ].join(" ")}
-                                >
+                                <span className="font-display text-lg leading-none text-emerald-300">
                                   {yesPercent}%
                                 </span>
                               </div>
-                              <div
-                                className={[
-                                  "flex flex-col items-center rounded-lg py-2.5 transition-colors duration-100",
-                                  isEnded
-                                    ? "bg-navy/[0.03]"
-                                    : "bg-coral/[0.05] group-hover:bg-coral/[0.10]",
-                                ].join(" ")}
-                              >
-                                <span className="text-[10px] font-semibold uppercase tracking-wider text-coral/60 mb-0.5">
+                              <div className={`flex flex-col items-center rounded-lg py-2.5 ${isEnded ? "bg-white/[0.04]" : "bg-red-500/10 group-hover:bg-red-500/14"}`}>
+                                <span className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-300/70">
                                   No
                                 </span>
-                                <span
-                                  className={[
-                                    "font-display text-lg font-bold tabular-nums leading-none",
-                                    isEnded ? "text-slate-light" : "text-coral",
-                                  ].join(" ")}
-                                >
+                                <span className="font-display text-lg leading-none text-red-300">
                                   {noPercent}%
                                 </span>
                               </div>
                             </div>
-
-                            {/* Probability bar */}
-                            <div className="mt-2.5 h-1.5 rounded-full bg-navy/[0.06] overflow-hidden">
-                              <motion.div
+                            <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10">
+                              <div
                                 className="h-full rounded-full"
                                 style={{
-                                  background: "linear-gradient(90deg, #0052FF 0%, #3B82F6 60%, #06B6D4 100%)",
+                                  width: `${yesPercent}%`,
+                                  background: "linear-gradient(90deg,#16a34a,#34d399)",
                                 }}
-                                initial={{ width: "0%" }}
-                                animate={{ width: `${yesPercent}%` }}
-                                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                               />
                             </div>
                           </div>
+                        ) : (
+                          <div className="px-4 pb-4">
+                            <span className="text-[11px] text-white/35">No pricing available</span>
+                          </div>
                         )}
+
+                        <div className="flex items-center justify-between border-t border-white/8 px-4 py-2.5 text-[11px] text-white/40">
+                          <span>{timeLeft?.secondary ?? "No end date"}</span>
+                          <span className="transition-colors duration-100 group-hover:text-emerald-300">
+                            Open →
+                          </span>
+                        </div>
                       </Link>
                     </motion.div>
                   );
@@ -571,35 +445,22 @@ export default function MarketsPage() {
               </div>
             )}
 
-            {/* ── Pagination ── */}
             {totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-center gap-3">
+              <div className="mt-8 flex items-center justify-center gap-3">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={effectivePage <= 1}
-                  className={[
-                    "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
-                    effectivePage <= 1
-                      ? "text-slate-light cursor-not-allowed"
-                      : "text-navy hover:bg-navy/[0.06]",
-                  ].join(" ")}
-                  aria-label="Previous page"
+                  disabled={effectivePage === 1}
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/70 transition disabled:opacity-40"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-slate tabular-nums">
+                <span className="text-sm text-white/55">
                   Page {effectivePage} of {totalPages}
                 </span>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={effectivePage >= totalPages}
-                  className={[
-                    "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
-                    effectivePage >= totalPages
-                      ? "text-slate-light cursor-not-allowed"
-                      : "text-navy hover:bg-navy/[0.06]",
-                  ].join(" ")}
-                  aria-label="Next page"
+                  disabled={effectivePage === totalPages}
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/70 transition disabled:opacity-40"
                 >
                   Next
                 </button>

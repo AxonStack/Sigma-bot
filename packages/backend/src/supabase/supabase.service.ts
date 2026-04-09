@@ -17,7 +17,7 @@ export class SupabaseService {
     });
   }
 
-  /** Supabase client for clawdbet project. Only write target: clawdbet_markets_data. */
+  /** Supabase client for the OpenBet project. Legacy write target: clawdbet_markets_data. */
   getClawdbetClient(): SupabaseClient {
     return this.client;
   }

@@ -6,14 +6,12 @@ import {
   useAccount,
   useReadContract,
   useWriteContract,
-  useWaitForTransactionReceipt,
 } from "wagmi";
 import { baseSepolia } from "wagmi/chains";
 import { useQueryClient } from "@tanstack/react-query";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
 import { ERC20_ABI, FACTORY_ABI } from "@/lib/abi/abi";
+import { WalletPill } from "./wallet-pill";
 
 // ── Parsed ABIs ──────────────────────────────────────────────────────────────
 
@@ -203,7 +201,7 @@ export function TradePanel({
       ? yesBalance
       : noBalance;
 
-  const balanceLabel = activeTab === "buy" ? "$SIGMA" : outcome === "yes" ? "Yes Tokens" : "No Tokens";
+  const balanceLabel = activeTab === "buy" ? "OPENBET" : outcome === "yes" ? "Yes Tokens" : "No Tokens";
   const needsApproval = activeTab === "buy" && parsedAmount > BigInt(0) && (allowance ?? BigInt(0)) < parsedAmount;
   const isBusy = approvePending || mintPending || burnPending;
 
@@ -234,11 +232,10 @@ export function TradePanel({
         chainId: baseSepolia.id,
       },
       { 
-        onSuccess: () => toast.info("Approving $SIGMA..."),
-        onError: (err) => {
-          const msg = (err as any).shortMessage || err.message;
+        onSuccess: () => undefined,
+        onError: (err: Error & { shortMessage?: string }) => {
+          const msg = err.shortMessage || err.message;
           setTxError(msg);
-          toast.error("Approval failed: " + msg);
         } 
       },
     );
@@ -249,88 +246,66 @@ export function TradePanel({
     setTxError(null);
     const minTokens = (previewTokensOut * BigInt(995)) / BigInt(1000); 
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600); 
-    
-    toast.promise(
-      new Promise((resolve, reject) => {
-        writeMint(
-          {
-            address: FACTORY_ADDRESS,
-            abi: factoryAbi,
-            functionName: "mintDecisionTokens",
-            args: [conditionId, parsedAmount, tokenId, minTokens, deadline],
-            chainId: baseSepolia.id,
-          },
-          {
-            onSuccess: (hash) => {
-              queryClient.invalidateQueries();
-              onTradeSuccess?.();
-              resolve(hash);
-            },
-            onError: (err) => {
-              setTxError(err.message);
-              reject(err);
-            },
-          }
-        );
-      }),
+
+    writeMint(
       {
-        loading: `Buying ${outcome.toUpperCase()} tokens...`,
-        success: "Buy successful!",
-        error: "Buy failed",
+        address: FACTORY_ADDRESS,
+        abi: factoryAbi,
+        functionName: "mintDecisionTokens",
+        args: [conditionId, parsedAmount, tokenId, minTokens, deadline],
+        chainId: baseSepolia.id,
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries();
+          onTradeSuccess?.();
+        },
+        onError: (err) => {
+          setTxError(err.message);
+        },
       }
     );
-  }, [conditionId, tokenId, parsedAmount, previewTokensOut, writeMint, outcome, queryClient, onTradeSuccess]);
+  }, [conditionId, tokenId, parsedAmount, previewTokensOut, writeMint, queryClient, onTradeSuccess]);
 
   const handleBurn = useCallback(() => {
     if (tokenId == null || !parsedAmount || !previewCollateralOut) return;
     setTxError(null);
     const minCollateral = (previewCollateralOut * BigInt(995)) / BigInt(1000);
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
-    
-    toast.promise(
-      new Promise((resolve, reject) => {
-        writeBurn(
-          {
-            address: FACTORY_ADDRESS,
-            abi: factoryAbi,
-            functionName: "burnDecisionTokens",
-            args: [conditionId, tokenId, parsedAmount, minCollateral, deadline],
-            chainId: baseSepolia.id,
-          },
-          {
-            onSuccess: (hash) => {
-              queryClient.invalidateQueries();
-              onTradeSuccess?.();
-              resolve(hash);
-            },
-            onError: (err) => {
-              setTxError(err.message);
-              reject(err);
-            },
-          }
-        );
-      }),
+
+    writeBurn(
       {
-        loading: `Selling ${outcome.toUpperCase()} tokens...`,
-        success: "Sell successful!",
-        error: "Sell failed",
+        address: FACTORY_ADDRESS,
+        abi: factoryAbi,
+        functionName: "burnDecisionTokens",
+        args: [conditionId, tokenId, parsedAmount, minCollateral, deadline],
+        chainId: baseSepolia.id,
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries();
+          onTradeSuccess?.();
+        },
+        onError: (err) => {
+          setTxError(err.message);
+        },
       }
     );
-  }, [conditionId, tokenId, parsedAmount, previewCollateralOut, writeBurn, outcome, queryClient, onTradeSuccess]);
+  }, [conditionId, tokenId, parsedAmount, previewCollateralOut, writeBurn, queryClient, onTradeSuccess]);
 
   // ── Settled state ──────────────────────────────────────────────────────────
 
   if (settled) {
     return (
       <div className="relative group">
-        <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-r from-slate-light/20 to-slate-light/10" />
-        <div className="relative p-8 rounded-3xl glass-strong border border-navy/[0.06]">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-light mb-4">
+        <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-r from-white/10 to-white/5" />
+        <div className="relative rounded-3xl border border-white/10 bg-white/[0.04] p-8 backdrop-blur-xl">
+          <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/35">
             Trade
           </p>
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <p className="font-display text-lg text-slate-light">Market Settled</p>
-            <p className="text-xs text-slate mt-1">Trading is no longer available.</p>
+            <p className="font-display text-lg text-white/78">Market settled</p>
+            <p className="mt-1 text-xs text-white/48">Trading is no longer available.</p>
           </div>
         </div>
       </div>
@@ -342,14 +317,14 @@ export function TradePanel({
   if (!isConnected) {
     return (
       <div className="relative group">
-        <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-r from-base-blue/20 via-cyan/10 to-base-blue/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <div className="relative p-8 rounded-3xl glass-strong border border-navy/[0.06]">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-light mb-4">
+        <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-r from-emerald-500/18 via-transparent to-red-500/12 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+        <div className="relative rounded-3xl border border-white/10 bg-white/[0.04] p-8 backdrop-blur-xl">
+          <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/35">
             Trade
           </p>
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <p className="text-sm text-slate mb-4">Connect your wallet to start trading.</p>
-            <ConnectButton />
+            <p className="mb-4 text-sm text-white/52">Connect your wallet to start trading.</p>
+            <WalletPill showNetwork={false} />
           </div>
         </div>
       </div>
@@ -360,25 +335,22 @@ export function TradePanel({
 
   return (
     <div className="relative group">
-      {/* Hover glow */}
-      <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-r from-base-blue/20 via-cyan/10 to-base-blue/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-r from-emerald-500/18 via-transparent to-red-500/12 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-      <div className="relative p-6 rounded-3xl glass-strong border border-navy/[0.06] group-hover:border-base-blue/15 transition-all duration-300">
-        {/* Header */}
-        <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-light mb-4">
+      <div className="relative rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl transition-all duration-300 group-hover:border-white/14">
+        <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/35">
           Trade
         </p>
 
-        {/* ── Tab Toggle ──────────────────────────────────────────────────── */}
-        <div className="flex rounded-xl bg-navy/[0.04] p-1 mb-5">
+        <div className="mb-5 flex rounded-xl bg-black/30 p-1">
           {(["buy", "sell"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`relative flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
+              className={`relative flex-1 rounded-lg py-2 text-sm font-semibold transition-all duration-200 cursor-pointer ${
                 activeTab === tab
                   ? "text-white"
-                  : "text-slate hover:text-navy"
+                  : "text-white/45 hover:text-white"
               }`}
             >
               {activeTab === tab && (
@@ -386,8 +358,8 @@ export function TradePanel({
                   layoutId="tab-bg"
                   className={`absolute inset-0 rounded-lg ${
                     tab === "buy"
-                      ? "bg-gradient-to-r from-base-blue to-base-light"
-                      : "bg-gradient-to-r from-coral to-coral-light"
+                      ? "bg-gradient-to-r from-emerald-600 to-emerald-400"
+                      : "bg-gradient-to-r from-rose-500 to-red-500"
                   }`}
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
@@ -397,27 +369,26 @@ export function TradePanel({
           ))}
         </div>
 
-        {/* ── Outcome Selector ────────────────────────────────────────────── */}
         <div className="flex gap-2 mb-5">
           {(["yes", "no"] as const).map((o) => (
             <button
               key={o}
               onClick={() => setOutcome(o)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 cursor-pointer ${
+              className={`flex-1 flex items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-semibold transition-all duration-200 cursor-pointer ${
                 outcome === o
                   ? o === "yes"
-                    ? "border-base-blue/30 bg-base-blue/10 text-base-blue"
-                    : "border-coral/30 bg-coral/10 text-coral"
-                  : "border-navy/[0.08] bg-white/50 text-slate hover:border-navy/[0.15]"
+                    ? "border-emerald-500/30 bg-emerald-500/12 text-emerald-300"
+                    : "border-red-500/30 bg-red-500/12 text-red-300"
+                  : "border-white/10 bg-white/[0.03] text-white/50 hover:border-white/18"
               }`}
             >
               <span
                 className={`w-2.5 h-2.5 rounded-full ${
                   outcome === o
                     ? o === "yes"
-                      ? "bg-base-blue"
-                      : "bg-coral"
-                    : "bg-slate-light/40"
+                      ? "bg-emerald-400"
+                      : "bg-red-400"
+                    : "bg-white/25"
                 }`}
               />
               {o === "yes" ? "Yes" : "No"}
@@ -425,10 +396,9 @@ export function TradePanel({
           ))}
         </div>
 
-        {/* ── Amount Input ────────────────────────────────────────────────── */}
         <div className="mb-1">
-          <label className="text-xs font-medium text-slate mb-1.5 block">Amount</label>
-          <div className="flex items-center gap-2 rounded-xl border border-navy/[0.08] bg-white/60 px-3 py-2.5 focus-within:border-base-blue/30 transition-colors duration-200">
+          <label className="mb-1.5 block text-xs font-medium text-white/48">Amount</label>
+          <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/25 px-3 py-2.5 transition-colors duration-200 focus-within:border-emerald-400/30">
             <input
               type="text"
               inputMode="decimal"
@@ -438,17 +408,17 @@ export function TradePanel({
                 const v = e.target.value;
                 if (/^[0-9]*\.?[0-9]*$/.test(v)) setAmount(v);
               }}
-              className="flex-1 bg-transparent text-navy font-semibold text-lg outline-none placeholder:text-slate-light/50"
+              className="flex-1 bg-transparent text-lg font-semibold text-white outline-none placeholder:text-white/25"
               disabled={isBusy}
             />
             <button
               onClick={handleMax}
-              className="px-2.5 py-1 rounded-lg bg-base-blue/10 text-[11px] font-bold text-base-blue hover:bg-base-blue/20 transition-colors duration-150 cursor-pointer"
+              className="rounded-lg bg-white/8 px-2.5 py-1 text-[11px] font-bold text-white/72 transition-colors duration-150 hover:bg-white/12 cursor-pointer"
             >
               MAX
             </button>
           </div>
-          <p className="text-[11px] text-slate mt-1.5">
+          <p className="mt-1.5 text-[11px] text-white/45">
             Balance: {fmtBalance(currentBalance, tokenDecimals)} {balanceLabel}
           </p>
         </div>
@@ -463,43 +433,42 @@ export function TradePanel({
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="mt-4 p-3 rounded-xl bg-navy/[0.03] border border-navy/[0.05] space-y-1.5">
+              <div className="mt-4 space-y-1.5 rounded-xl border border-white/8 bg-black/25 p-3">
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate">
+                  <span className="text-white/48">
                     You receive
                   </span>
-                  <span className="font-semibold text-navy">
+                  <span className="font-semibold text-white">
                     ~{activeTab === "buy"
                       ? `${fmtBalance(previewTokensOut)} tokens`
-                      : `${fmtBalance(previewCollateralOut ? previewCollateralOut * INFLATION_FACTOR : undefined)} $SIGMA`}
+                      : `${fmtBalance(previewCollateralOut ? previewCollateralOut * INFLATION_FACTOR : undefined)} OPENBET`}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate">Effective price</span>
-                  <span className="font-semibold text-navy">{fmtPrice(effectivePrice)}</span>
+                  <span className="text-white/48">Effective price</span>
+                  <span className="font-semibold text-white">{fmtPrice(effectivePrice)}</span>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ── Action Button ───────────────────────────────────────────────── */}
         <div className="mt-5">
           {activeTab === "buy" ? (
             needsApproval ? (
               <button
                 onClick={handleApprove}
                 disabled={isBusy || parsedAmount === BigInt(0)}
-                className="w-full py-3 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-base-blue to-base-light hover:shadow-lg hover:shadow-base-blue/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-400 py-3 text-sm font-semibold text-white transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
               >
                 {approvePending && <Spinner />}
-                {statusText ?? "Approve $SIGMA"}
+                {statusText ?? "Approve OPENBET"}
               </button>
             ) : (
               <button
                 onClick={handleMint}
                 disabled={isBusy || parsedAmount === BigInt(0) || previewTokensOut == null}
-                className="w-full py-3 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-base-blue to-base-light hover:shadow-lg hover:shadow-base-blue/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-400 py-3 text-sm font-semibold text-white transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
               >
                 {mintPending && <Spinner />}
                 {statusText ?? `Buy ${outcome.toUpperCase()} Tokens`}
@@ -509,7 +478,7 @@ export function TradePanel({
             <button
               onClick={handleBurn}
               disabled={isBusy || parsedAmount === BigInt(0) || previewCollateralOut == null}
-              className="w-full py-3 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-coral to-coral-light hover:shadow-lg hover:shadow-coral/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-red-500 py-3 text-sm font-semibold text-white transition-all duration-200 hover:shadow-lg hover:shadow-red-500/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
             >
               {burnPending && <Spinner />}
               {statusText ?? `Sell ${outcome.toUpperCase()} Tokens`}
@@ -524,7 +493,7 @@ export function TradePanel({
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              className="mt-3 text-xs text-coral bg-coral/5 border border-coral/10 rounded-lg px-3 py-2 break-words"
+              className="mt-3 break-words rounded-lg border border-red-500/20 bg-red-500/8 px-3 py-2 text-xs text-red-300"
             >
               {txError}
             </motion.p>
@@ -533,18 +502,18 @@ export function TradePanel({
 
         {/* ── Positions ───────────────────────────────────────────────────── */}
         {(yesBalance != null || noBalance != null) && (
-          <div className="mt-5 pt-5 border-t border-navy/[0.06]">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-light mb-3">
+          <div className="mt-5 border-t border-white/8 pt-5">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/35">
               Your Positions
             </p>
             <div className="flex gap-4">
-              <div className="flex-1 p-3 rounded-xl bg-base-blue/[0.04] border border-base-blue/10">
-                <p className="text-[10px] font-semibold uppercase text-base-blue/60 mb-0.5">Yes</p>
-                <p className="font-display text-lg text-navy">{fmtBalance(yesBalance)}</p>
+              <div className="flex-1 rounded-xl border border-emerald-500/16 bg-emerald-500/10 p-3">
+                <p className="mb-0.5 text-[10px] font-semibold uppercase text-emerald-300/70">Yes</p>
+                <p className="font-display text-lg text-white">{fmtBalance(yesBalance)}</p>
               </div>
-              <div className="flex-1 p-3 rounded-xl bg-coral/[0.04] border border-coral/10">
-                <p className="text-[10px] font-semibold uppercase text-coral/60 mb-0.5">No</p>
-                <p className="font-display text-lg text-navy">{fmtBalance(noBalance)}</p>
+              <div className="flex-1 rounded-xl border border-red-500/16 bg-red-500/10 p-3">
+                <p className="mb-0.5 text-[10px] font-semibold uppercase text-red-300/70">No</p>
+                <p className="font-display text-lg text-white">{fmtBalance(noBalance)}</p>
               </div>
             </div>
           </div>

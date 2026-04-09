@@ -100,9 +100,6 @@ export default function MarketPage() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedAgent, setCopiedAgent] = useState(false);
 
-  // ── Metric Inflation (Marketing Logic) ─────────────────────────────────────
-  const INFLATION_FACTOR_DISPLAY = BigInt(1000);
-
   const [market, setMarket] = useState<MarketDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -117,7 +114,7 @@ export default function MarketPage() {
   const fetchMarket = useCallback(async () => {
     if (!conditionId) return;
     if (!MARKET_SERVICE_BASE_URL) {
-      setFetchError("NEXT_PUBLIC_CLAWDBET_MARKET_SERVICE_URL is not set");
+      setFetchError("Market service URL is not set");
       setLoading(false);
       return;
     }
@@ -235,7 +232,7 @@ export default function MarketPage() {
 
   function copyForAgent() {
     navigator.clipboard.writeText(
-      `Go through https://github.com/clawdbet/skills and follow instructions to trade on this market with conditionId : ${conditionId}`
+      `Review the OpenBet trading instructions for this market and use conditionId ${conditionId}.`
     );
     setCopiedAgent(true);
     setTimeout(() => setCopiedAgent(false), 1500);
@@ -253,7 +250,7 @@ export default function MarketPage() {
         <div>
           {/* ── Question Card ────────────────────────────────────────────── */}
           <motion.div {...stagger(0)} className="mb-4">
-            <div className="rounded-2xl bg-navy p-6 md:p-8">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-6 backdrop-blur-xl md:p-8">
               {/* Top row: status + deadline */}
               <div className="flex items-center justify-between mb-4">
                 <span className="flex items-center gap-1.5 text-[11px] font-medium text-white/50">
@@ -266,7 +263,7 @@ export default function MarketPage() {
                 </span>
                 {endTimeFormatted && (
                   <div
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-coral/15 text-coral-light"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-red-500/12 px-2.5 py-1 text-[11px] font-medium text-red-300"
                   >
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="shrink-0">
                       <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3" />
@@ -286,7 +283,7 @@ export default function MarketPage() {
               <div className="flex justify-end -mt-2">
                 <button
                   onClick={copyForAgent}
-                  className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full bg-gold/15 hover:bg-gold/25 text-[11px] font-medium text-gold hover:text-gold transition-all duration-150 cursor-pointer"
+                  className="inline-flex h-7 items-center gap-1.5 rounded-full bg-white/8 px-3 text-[11px] font-medium text-white/72 transition-all duration-150 hover:bg-white/12 hover:text-white cursor-pointer"
                 >
                   {copiedAgent ? (
                     <>
@@ -311,12 +308,12 @@ export default function MarketPage() {
 
           {/* ── Outcome Card ─────────────────────────────────────────────── */}
           <motion.div {...stagger(0.08)} className="mb-4">
-            <div className="rounded-xl glass-strong p-5">
-              <p className="text-xs font-medium text-slate-light mb-3">Price Probability</p>
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl">
+              <p className="mb-3 text-xs font-medium text-white/45">Price Probability</p>
               {yesPercent != null && noPercent != null ? (
                 <PriceBar yesPercent={yesPercent} noPercent={noPercent} />
               ) : (
-                <p className="text-slate text-sm">Price data unavailable.</p>
+                <p className="text-sm text-white/50">Price data unavailable.</p>
               )}
             </div>
           </motion.div>
@@ -324,52 +321,52 @@ export default function MarketPage() {
           {/* ── Info Cards (Deadline + Liquidity) ────────────────────────── */}
           <motion.div {...stagger(0.14)} className="grid grid-cols-2 gap-4 mb-4">
             {/* Deadline */}
-            <div className="rounded-xl glass p-4">
-              <p className="text-xs font-medium text-slate-light mb-3">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
+              <p className="mb-3 text-xs font-medium text-white/45">
                 Deadline
               </p>
               {endTimeFormatted ? (
                 <>
-                  <p className="font-display text-xl text-navy tabular-nums leading-none mb-1.5">
+                  <p className="mb-1.5 font-display text-xl leading-none tabular-nums text-white">
                     {endTimeFormatted.day} {endTimeFormatted.month} {endTimeFormatted.year}
                   </p>
                   <p
                     className={`text-[13px] font-medium ${
-                      endTimeFormatted.ended ? "text-coral" : "text-amber-500"
+                      endTimeFormatted.ended ? "text-red-300" : "text-amber-300"
                     }`}
                   >
                     {endTimeFormatted.relative}
                   </p>
                 </>
               ) : (
-                <p className="font-display text-xl text-navy">—</p>
+                <p className="font-display text-xl text-white">—</p>
               )}
             </div>
 
             {/* Liquidity */}
-            <div className="rounded-xl glass p-4">
-              <p className="text-xs font-medium text-slate-light mb-3">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
+              <p className="mb-3 text-xs font-medium text-white/45">
                 Liquidity
               </p>
-              <p className="font-display text-xl text-navy tabular-nums leading-none mb-1.5">
+              <p className="mb-1.5 font-display text-xl leading-none tabular-nums text-white">
                 {reserve != null ? formatReserve(reserve) : "—"}
               </p>
-              <p className="text-[13px] font-medium text-cyan">
-                $SIGMA
+              <p className="text-[13px] font-medium text-emerald-300">
+                OPENBET
               </p>
             </div>
 
             {/* Volume */}
-            <div className="rounded-xl glass p-4">
-              <p className="text-xs font-medium text-slate-light mb-3">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
+              <p className="mb-3 text-xs font-medium text-white/45">
                 Volume (24h)
               </p>
-              <p className="font-display text-xl text-navy tabular-nums leading-none mb-1.5">
+              <p className="mb-1.5 font-display text-xl leading-none tabular-nums text-white">
                 {reserve != null 
                   ? formatReserve(reserve * BigInt(2) + BigInt("150000000000000000000")) 
                   : "—"}
               </p>
-              <p className="text-[13px] font-medium text-amber-500">
+              <p className="text-[13px] font-medium text-amber-300">
                 +14.2% ↑
               </p>
             </div>
@@ -379,11 +376,11 @@ export default function MarketPage() {
           <motion.div {...stagger(0.18)} className="flex items-center gap-2 flex-wrap text-[11px]">
             <button
               onClick={copyConditionId}
-              className="inline-flex items-center gap-1 font-mono text-slate hover:text-navy transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 font-mono text-white/55 hover:text-white transition-colors cursor-pointer"
             >
               {truncatedContract}
               {copiedId ? (
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="text-cyan">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="text-emerald-300">
                   <path d="M3 8.5L6.5 12L13 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               ) : (
@@ -393,21 +390,21 @@ export default function MarketPage() {
                 </svg>
               )}
             </button>
-            <span className="text-slate-light/30">·</span>
-            <span className="text-slate">$SIGMA</span>
-            <span className="text-slate-light/30">·</span>
+            <span className="text-white/20">·</span>
+            <span className="text-white/45">OPENBET</span>
+            <span className="text-white/20">·</span>
             <button
               onClick={copyShareLink}
-              className="text-base-blue hover:text-base-dark transition-colors cursor-pointer"
+              className="text-emerald-300 hover:text-emerald-200 transition-colors cursor-pointer"
             >
               {copiedLink ? "Copied!" : "Share"}
             </button>
-            <span className="text-slate-light/30">·</span>
+            <span className="text-white/20">·</span>
             <a
               href={BASESCAN_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-0.5 text-base-blue hover:text-base-dark transition-colors"
+              className="inline-flex items-center gap-0.5 text-emerald-300 hover:text-emerald-200 transition-colors"
             >
               Basescan
               <svg width="10" height="10" viewBox="0 0 16 16" fill="none">

@@ -44,7 +44,7 @@
 
 ---
 
-## 3. clawdbet_markets_data (write)
+## 3. clawdbet_markets_data (legacy write table)
 
 **Project:** Separate Supabase project — use `CLAWDBET_SUPABASE_URL` and `CLAWDBET_SUPABASE_SERVICE_ROLE_KEY` (see `getClawdbetClient()`).
 

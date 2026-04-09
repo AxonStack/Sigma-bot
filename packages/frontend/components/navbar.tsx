@@ -1,24 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { WalletPill } from "./wallet-pill";
 
 const navLinks = [
-  { href: "/markets", label: "Explore Markets" },
-  { href: "#how-it-works", label: "How It Works" },
-  { href: "#tokenomics", label: "Tokenomics" },
-  { href: "#compare", label: "Compare" },
+  { href: "/markets", label: "Markets" },
+  { href: "/#how-it-works", label: "How It Works" },
+  { href: "/#tokenomics", label: "Tokenomics" },
 ];
 
 export function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
+    const handleScroll = () => setScrolled(window.scrollY > 12);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -32,132 +31,132 @@ export function Navbar() {
 
   return (
     <>
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
-          ? "glass-strong border-b border-base-blue/[0.08] shadow-[0_4px_30px_rgba(0,82,255,0.04)]"
-          : "bg-transparent"
+      <nav className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6">
+        <div
+          className={`mx-auto max-w-7xl rounded-[30px] border px-4 py-3 transition-[background-color,border-color,transform] duration-200 sm:px-5 ${
+            scrolled
+              ? "border-white/12 bg-black/70 backdrop-blur-xl"
+              : "border-white/10 bg-black/40 backdrop-blur-lg"
           }`}
-      >
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 md:h-[72px] flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <Image
-              src="/logo.png"
-              alt="SigmaBet"
-              width={34}
-              height={34}
-              className="rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
-            />
-            <span className="font-display text-xl text-navy tracking-tight">
-              SigmaBet
-            </span>
-          </Link>
+        >
+          <div className="grid items-center gap-4 md:grid-cols-[auto_1fr_auto]">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-2xl bg-[#ff3b6b]/30 blur-xl" />
+                <Image
+                  src="/logo.png"
+                  alt="OpenBet"
+                  width={38}
+                  height={38}
+                  className="relative rounded-2xl border border-white/10"
+                />
+              </div>
+              <div>
+                <div className="font-display text-lg font-semibold tracking-tight text-white">
+                  OpenBet
+                </div>
+                <div className="text-[11px] uppercase tracking-[0.28em] text-white/40">
+                  Live on Base
+                </div>
+              </div>
+            </Link>
 
-          {/* Desktop */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => {
-              const isInternal = link.href.startsWith("/") && !link.href.startsWith("/#");
-              return isInternal ? (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-[13px] font-medium text-slate hover:text-base-blue transition-colors duration-200 tracking-wide uppercase"
-                >
-                  {link.label}
-                </Link>
-              ) : (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="text-[13px] font-medium text-slate hover:text-base-blue transition-colors duration-200 tracking-wide uppercase"
-                >
-                  {link.label}
-                </a>
-              );
-            })}
-            <div className="navbar-connect">
-              <ConnectButton />
+            <div className="hidden items-center justify-center gap-8 md:flex">
+              {navLinks.map((link) => {
+                const content = (
+                  <span className="text-[13px] uppercase tracking-[0.24em] text-white/62 transition-colors duration-200 hover:text-white">
+                    {link.label}
+                  </span>
+                );
+
+                return link.href.startsWith("/") ? (
+                  <Link key={link.href} href={link.href}>
+                    {content}
+                  </Link>
+                ) : (
+                  <a key={link.href} href={link.href}>
+                    {content}
+                  </a>
+                );
+              })}
             </div>
+
+            <div className="hidden md:flex md:justify-end">
+              <WalletPill />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMobileOpen((current) => !current)}
+              className="ml-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white md:hidden"
+              aria-label="Toggle menu"
+            >
+              <div className="flex w-5 flex-col gap-[5px]">
+                <span
+                  className={`h-[1.5px] w-full rounded-full bg-current transition-transform duration-200 ${
+                    mobileOpen ? "translate-y-[6.5px] rotate-45" : ""
+                  }`}
+                />
+                <span
+                  className={`h-[1.5px] w-full rounded-full bg-current transition duration-200 ${
+                    mobileOpen ? "scale-x-0 opacity-0" : ""
+                  }`}
+                />
+                <span
+                  className={`h-[1.5px] w-full rounded-full bg-current transition-transform duration-200 ${
+                    mobileOpen ? "-translate-y-[6.5px] -rotate-45" : ""
+                  }`}
+                />
+              </div>
+            </button>
           </div>
-
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden relative w-10 h-10 flex items-center justify-center"
-            aria-label="Toggle menu"
-          >
-            <div className="w-5 flex flex-col gap-[5px]">
-              <span
-                className={`h-[1.5px] w-full bg-navy rounded-full transition-all duration-300 origin-center ${mobileOpen ? "rotate-45 translate-y-[6.5px]" : ""
-                  }`}
-              />
-              <span
-                className={`h-[1.5px] w-full bg-navy rounded-full transition-all duration-300 ${mobileOpen ? "opacity-0 scale-x-0" : ""
-                  }`}
-              />
-              <span
-                className={`h-[1.5px] w-full bg-navy rounded-full transition-all duration-300 origin-center ${mobileOpen ? "-rotate-45 -translate-y-[6.5px]" : ""
-                  }`}
-              />
-            </div>
-          </button>
         </div>
       </nav>
 
-      {/* Mobile overlay */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 glass-strong flex flex-col items-center justify-center"
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-40 bg-[#050103]/96 px-6 pt-28 backdrop-blur-xl md:hidden"
           >
-            <nav className="flex flex-col items-center gap-8">
-              {navLinks.map((link, i) => {
-                const isInternal = link.href.startsWith("/") && !link.href.startsWith("/#");
-                const content = (
-                  <motion.span
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + i * 0.05 }}
-                    className="text-2xl font-display text-navy"
-                  >
-                    {link.label}
-                  </motion.span>
-                );
-                return isInternal ? (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="block"
-                  >
-                    {content}
-                  </Link>
-                ) : (
-                  <motion.a
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + i * 0.05 }}
-                    className="text-2xl font-display text-navy"
-                  >
-                    {link.label}
-                  </motion.a>
-                );
-              })}
+            <div className="mx-auto max-w-sm rounded-[28px] border border-white/10 bg-white/[0.03] p-6">
+              <div className="flex flex-col gap-5">
+                {navLinks.map((link, index) => {
+                  const content = (
+                    <motion.span
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.05 + index * 0.05, duration: 0.2 }}
+                      className="font-display text-2xl text-white"
+                    >
+                      {link.label}
+                    </motion.span>
+                  );
+
+                  return link.href.startsWith("/") ? (
+                    <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
+                      {content}
+                    </Link>
+                  ) : (
+                    <a key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
+                      {content}
+                    </a>
+                  );
+                })}
+              </div>
+
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-                className="mt-4 navbar-connect"
+                transition={{ delay: 0.24, duration: 0.2 }}
+                className="mt-6"
               >
-                <ConnectButton />
+                <WalletPill fullWidth showNetwork={false} />
               </motion.div>
-            </nav>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

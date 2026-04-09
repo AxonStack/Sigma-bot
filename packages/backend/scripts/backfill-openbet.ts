@@ -1,6 +1,9 @@
 /**
- * Backfill synced_at, synced_block, market_createdTime, market_endTime, yes_token_supply & no_token_supply for rows in clawdbet_markets_data that are missing them.
- * Run: npx ts-node -r dotenv/config scripts/backfill-clawdbet.ts
+ * Backfill synced_at, synced_block, market_createdTime, market_endTime,
+ * yes_token_supply, and no_token_supply for rows in the legacy
+ * clawdbet_markets_data table that are missing them.
+ *
+ * Run: npx ts-node -r dotenv/config scripts/backfill-openbet.ts
  */
 import { createClient } from '@supabase/supabase-js';
 import { Contract, JsonRpcProvider } from 'ethers';
@@ -22,8 +25,8 @@ function toHexBytes32(value: unknown): string {
 async function main() {
   const rpcUrl = process.env.RPC_URL;
   const factoryAddress = process.env.CONTRACT_FACTORY_ADDRESS;
-  const clawdbetUrl = process.env.CLAWDBET_SUPABASE_URL;
-  const clawdbetKey =
+  const supabaseUrl = process.env.CLAWDBET_SUPABASE_URL;
+  const supabaseKey =
     process.env.CLAWDBET_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.CLAWDBET_SUPABASE_ANON_KEY;
 
@@ -31,14 +34,17 @@ async function main() {
     console.error('Missing RPC_URL or CONTRACT_FACTORY_ADDRESS in .env');
     process.exit(1);
   }
-  if (!clawdbetUrl || !clawdbetKey) {
-    console.error('Missing CLAWDBET_SUPABASE_URL and CLAWDBET_SUPABASE_SERVICE_ROLE_KEY (or ANON_KEY) in .env');
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error(
+      'Missing CLAWDBET_SUPABASE_URL and CLAWDBET_SUPABASE_SERVICE_ROLE_KEY (or ANON_KEY) in .env',
+    );
     process.exit(1);
   }
 
   const provider = new JsonRpcProvider(rpcUrl, { chainId: 8453, name: 'base-mainnet' });
   const factory = new Contract(factoryAddress, PNP_FACTORY_ABI, provider);
-  const supabase = createClient(clawdbetUrl, clawdbetKey, {
+  const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: { persistSession: false },
   });
 
@@ -53,7 +59,9 @@ async function main() {
   }
 
   if (!rows || rows.length === 0) {
-    console.log('No rows with missing market_createdTime / market_endTime / yes_token_supply / no_token_supply. Nothing to do.');
+    console.log(
+      'No rows with missing market_createdTime / market_endTime / yes_token_supply / no_token_supply. Nothing to do.',
+    );
     return;
   }
 
@@ -91,7 +99,7 @@ async function main() {
         skipRow = true;
       }
     } catch {
-      // Contract reverted – still do partial update (synced_*, market_createdTime)
+      // Contract reverted; still do partial update.
     }
 
     if (!skipRow) {
@@ -101,17 +109,17 @@ async function main() {
           updatePayload.market_endTime = toTimeString(new Date(Number(endTimeBig) * 1000));
         }
       } catch {
-        // Contract reverted – still update what we have
+        // Contract reverted; still update what we have.
       }
 
-      let yesSupply: string = '0';
-      let noSupply: string = '0';
+      let yesSupply = '0';
+      let noSupply = '0';
       try {
         const [yesPrice, noPrice] = await factory.getMarketPrices(marketAddress);
         yesSupply = String(yesPrice);
         noSupply = String(noPrice);
       } catch {
-        // Contract reverted – use "0" so we never leave null for a market
+        // Contract reverted; use zero so we never leave null values behind.
       }
       updatePayload.yes_token_supply = yesSupply;
       updatePayload.no_token_supply = noSupply;

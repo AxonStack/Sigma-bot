@@ -1,4 +1,4 @@
-# SigmaBet Monorepo
+# OpenBet Monorepo
 
 Prediction market platform — frontend + backend in a single monorepo.
 

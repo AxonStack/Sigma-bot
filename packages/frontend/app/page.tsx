@@ -1,24 +1,16 @@
-import { Navbar } from "@/components/navbar";
-import { Hero } from "@/components/hero";
-import { Marquee } from "@/components/marquee";
-import { Problem } from "@/components/problem";
-import { HowItWorks } from "@/components/how-it-works";
-import { Flywheel } from "@/components/flywheel";
-import { WhyClawdBet } from "@/components/why-clawdbet";
-import { AgentIdentity } from "@/components/agent-identity";
 import { CTAFooter } from "@/components/cta-footer";
+import { Flywheel } from "@/components/flywheel";
+import { Hero } from "@/components/hero";
+import { HowItWorks } from "@/components/how-it-works";
+import { Navbar } from "@/components/navbar";
 
 export default function Home() {
   return (
-    <main>
+    <main className="overflow-x-hidden">
       <Navbar />
       <Hero />
-      <Marquee />
-      <Problem />
       <HowItWorks />
       <Flywheel />
-      <WhyClawdBet />
-      <AgentIdentity />
       <CTAFooter />
     </main>
   );

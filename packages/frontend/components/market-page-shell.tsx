@@ -6,17 +6,15 @@ import { Navbar } from "@/components/navbar";
 /** Reusable page wrapper for all market-detail states (background, navbar, back link). */
 export function MarketPageShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen relative overflow-hidden">
-      {/* Background layers */}
-      <div className="absolute inset-0 bg-gradient-to-b from-ice-deep via-ice to-white" />
-      <div className="absolute inset-0 bg-grid opacity-50" />
+    <main className="min-h-screen relative overflow-hidden bg-[#050103] text-white">
+      <div className="absolute inset-0 bg-grid opacity-[0.05]" />
       <div
         className="absolute top-20 -right-40 w-[480px] h-[480px] rounded-full opacity-40 blur-3xl blob-slow"
-        style={{ background: "rgba(0,82,255,0.08)" }}
+        style={{ background: "rgba(255, 58, 104, 0.18)" }}
       />
       <div
         className="absolute bottom-1/4 -left-32 w-[320px] h-[320px] rounded-full opacity-30 blur-3xl blob-slow"
-        style={{ background: "rgba(6,182,212,0.1)" }}
+        style={{ background: "rgba(191, 32, 62, 0.18)" }}
       />
 
       <Navbar />
@@ -25,7 +23,7 @@ export function MarketPageShell({ children }: { children: React.ReactNode }) {
       <div className="relative max-w-7xl mx-auto px-6 pt-20 md:pt-24">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm text-slate hover:text-base-blue transition-colors duration-200 mb-6"
+          className="inline-flex items-center gap-2 text-sm text-white/55 hover:text-white transition-colors duration-200 mb-6"
         >
           <svg
             width="16"
@@ -63,33 +61,31 @@ export function MarketMessageCard({
 }) {
   const borderColor =
     variant === "error"
-      ? "border-coral/20"
+      ? "border-red-500/25"
       : variant === "loading"
-        ? "border-base-blue/20"
-        : "border-navy/[0.06]";
+        ? "border-emerald-500/25"
+        : "border-white/10";
 
   return (
     <MarketPageShell>
       <div className="relative min-h-[50vh] flex items-center justify-center px-6 -mt-10">
-        <div
-          className={`relative p-8 rounded-2xl glass ${borderColor} border max-w-md text-center`}
-        >
+        <div className={`relative p-8 rounded-2xl glass-strong ${borderColor} border max-w-md text-center`}>
           {variant === "loading" && (
             <div className="absolute -inset-[1px] rounded-2xl overflow-hidden">
               <div
                 className="absolute inset-0 animate-spin-slow"
                 style={{
                   background:
-                    "conic-gradient(from 0deg, transparent 70%, #0052FF 85%, #06B6D4 95%, transparent 100%)",
+                    "conic-gradient(from 0deg, transparent 70%, #22c55e 85%, #34d399 95%, transparent 100%)",
                 }}
               />
-              <div className="absolute inset-[1px] rounded-[15px] glass" />
+              <div className="absolute inset-[1px] rounded-[15px] glass-strong" />
             </div>
           )}
           <div className="relative">
-            <p className="text-navy font-semibold">{title}</p>
+            <p className="text-white font-semibold">{title}</p>
             {subtitle && (
-              <p className="text-sm text-slate mt-2">{subtitle}</p>
+              <p className="text-sm text-white/58 mt-2">{subtitle}</p>
             )}
           </div>
         </div>

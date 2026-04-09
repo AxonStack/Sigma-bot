@@ -1,37 +1,16 @@
 import type { Metadata } from "next";
-import { Oswald, Source_Sans_3, Great_Vibes } from "next/font/google";
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { Toaster } from "sonner";
-
-const sourceSans = Source_Sans_3({
-  subsets: ["latin"],
-  variable: "--font-source-sans",
-  display: "swap",
-});
-
-const oswald = Oswald({
-  subsets: ["latin"],
-  variable: "--font-oswald",
-  display: "swap",
-});
-
-const greatVibes = Great_Vibes({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-great-vibes",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
-  title: "SigmaBet — Instant Prediction Markets by AI",
+  title: "OpenBet - Live Markets on Base",
   description:
-    "Create any prediction market instantly with guaranteed liquidity. SigmaBet is an AI agent on Base that turns any question into a tradeable market backed by $CLAWDBET.",
+    "OpenBet turns clear yes-or-no questions into live prediction markets with instant liquidity on Base.",
   openGraph: {
-    title: "SigmaBet — Instant Prediction Markets by AI",
+    title: "OpenBet - Live Markets on Base",
     description:
-      "Create any prediction market instantly with guaranteed liquidity in $CLAWDBET.",
+      "Create, explore, and trade live prediction markets on Base with OpenBet.",
     type: "website",
   },
 };
@@ -42,10 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${sourceSans.variable} ${oswald.variable} ${greatVibes.variable}`}
-    >
+    <html lang="en">
       <body className="antialiased">
         <Providers>{children}</Providers>
       </body>
