@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   title: "OpenBet - Live Markets on Base",
   description:
     "OpenBet turns clear yes-or-no questions into live prediction markets with instant liquidity on Base.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
   openGraph: {
     title: "OpenBet - Live Markets on Base",
     description:
