@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useWriteContract } from "wagmi";
 import { parseUnits } from "viem";
 import axios from "axios";
@@ -36,15 +37,56 @@ interface GeneratedMarket {
   resolutionSource: string;
 }
 
+const AUTO_REFRESH_DELAY_MS = 1800;
+
 export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const router = useRouter();
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState("");
   const [generated, setGenerated] = useState<GeneratedMarket | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { writeContractAsync } = useWriteContract();
+
+  const clearRefreshTimeout = () => {
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+      refreshTimeoutRef.current = null;
+    }
+  };
+
+  const resetState = () => {
+    setPrompt("");
+    setLoading(false);
+    setPhase("");
+    setGenerated(null);
+    setError(null);
+    setTxHash(null);
+  };
+
+  const closeAndRefresh = () => {
+    clearRefreshTimeout();
+    resetState();
+    onClose();
+    router.refresh();
+    window.location.reload();
+  };
+
+  const scheduleRefresh = () => {
+    clearRefreshTimeout();
+    refreshTimeoutRef.current = setTimeout(() => {
+      closeAndRefresh();
+    }, AUTO_REFRESH_DELAY_MS);
+  };
+
+  useEffect(() => {
+    return () => {
+      clearRefreshTimeout();
+    };
+  }, []);
 
   const handleGenerateAndDeploy = async () => {
     if (!prompt.trim() || !BACKEND_URL || !BACKEND_WALLET || !OPENBET_ADDRESS || !USDC_ADDRESS) {
@@ -91,13 +133,14 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
       if (!marketData.resolvable) {
         setError(`AI Rejected: ${marketData.reason || "Question is not objectively verifiable."} (Note: Creation fee captured)`);
         setLoading(false);
+        scheduleRefresh();
         return;
       }
       
       setGenerated(marketData);
 
       // Step 3: Deploy on-chain via Relayer
-      setPhase("Deploying to Base Sepolia...");
+      setPhase("Deploying to Base...");
       const execResponse = await axios.post(`${BACKEND_URL}/markets/execute-creation`, {
         ...marketData,
         collateralToken: OPENBET_ADDRESS,
@@ -106,6 +149,7 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
       });
 
       setTxHash(execResponse.data.txHash);
+      scheduleRefresh();
     } catch (err: unknown) {
       const message = axios.isAxiosError(err)
         ? err.response?.data?.message || err.message
@@ -113,6 +157,7 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
           ? err.message
           : "Process failed. Ensure you have USDC balance and approved the transaction.";
       setError(message);
+      scheduleRefresh();
     } finally {
       setLoading(false);
       setPhase("");
@@ -131,7 +176,7 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-display text-white">AI Market Architect</h2>
-          <button onClick={onClose} className="text-white/45 hover:text-white transition-colors">
+          <button onClick={closeAndRefresh} className="text-white/45 hover:text-white transition-colors">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
@@ -185,9 +230,12 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
                 {txHash ? (
                   <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-center text-emerald-100 shadow-sm">
                     <p className="mb-1 text-lg font-bold">Market Successfully Deployed!</p>
-                    <a href={`https://sepolia.basescan.org/tx/${txHash}`} target="_blank" rel="noreferrer" className="text-sm text-emerald-300 hover:underline">
+                    <a href={`https://basescan.org/tx/${txHash}`} target="_blank" rel="noreferrer" className="text-sm text-emerald-300 hover:underline">
                       View Tx: {txHash.slice(0, 10)}...{txHash.slice(-8)}
                     </a>
+                    <p className="mt-2 text-xs text-emerald-200/70">
+                      Refreshing automatically...
+                    </p>
                   </div>
                 ) : loading ? (
                   <div className="text-center p-4">
