@@ -42,7 +42,7 @@ export function Navbar() {
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 md:grid-cols-[auto_1fr_auto] md:gap-4">
             <Link href="/" className="flex min-w-0 items-center gap-3">
               <div className="relative">
-                <div className="absolute inset-0 rounded-2xl bg-[#ff3b6b]/30 blur-xl" />
+                <div className="absolute inset-0 rounded-2xl bg-[#1dff63]/25 blur-xl" />
                 <Image
                   src="/openbet.jpg"
                   alt="OpenBet"
@@ -56,7 +56,7 @@ export function Navbar() {
                   <div className="truncate font-display text-[15px] font-semibold tracking-tight text-white sm:text-lg">
                     OpenBet
                   </div>
-                  <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-amber-300/20 bg-amber-300/10 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200 sm:px-2.5 sm:tracking-[0.22em]">
+                  <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-emerald-300/25 bg-emerald-300/10 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200 sm:px-2.5 sm:tracking-[0.22em]">
                     Beta
                   </span>
                 </div>
@@ -125,7 +125,7 @@ export function Navbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-0 z-40 bg-[#050103]/96 px-4 pt-24 backdrop-blur-xl sm:px-6 md:hidden"
+            className="fixed inset-0 z-40 bg-[#040704]/96 px-4 pt-24 backdrop-blur-xl sm:px-6 md:hidden"
           >
             <div className="mx-auto max-w-sm rounded-[28px] border border-white/10 bg-white/[0.03] p-6">
               <div className="flex flex-col gap-5">

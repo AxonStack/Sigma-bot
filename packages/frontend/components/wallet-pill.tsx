@@ -64,7 +64,7 @@ export function WalletPill({
                   <button type="button" onClick={openChainModal} className="wallet-network-pill">
                     <span
                       className="wallet-network-dot"
-                      style={{ backgroundColor: chain.iconBackground ?? "#ff7bb9" }}
+                      style={{ backgroundColor: chain.iconBackground ?? "#53ff84" }}
                     />
                     <span>{chain.name}</span>
                   </button>

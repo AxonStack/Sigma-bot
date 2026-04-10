@@ -6,15 +6,15 @@ import { Navbar } from "@/components/navbar";
 /** Reusable page wrapper for all market-detail states (background, navbar, back link). */
 export function MarketPageShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen relative overflow-hidden bg-[#050103] text-white">
+    <main className="min-h-screen relative overflow-hidden bg-[#040704] text-white">
       <div className="absolute inset-0 bg-grid opacity-[0.05]" />
       <div
         className="absolute top-20 -right-40 w-[480px] h-[480px] rounded-full opacity-40 blur-3xl blob-slow"
-        style={{ background: "rgba(255, 58, 104, 0.18)" }}
+        style={{ background: "rgba(15, 230, 78, 0.14)" }}
       />
       <div
         className="absolute bottom-1/4 -left-32 w-[320px] h-[320px] rounded-full opacity-30 blur-3xl blob-slow"
-        style={{ background: "rgba(191, 32, 62, 0.18)" }}
+        style={{ background: "rgba(74, 222, 128, 0.12)" }}
       />
 
       <Navbar />

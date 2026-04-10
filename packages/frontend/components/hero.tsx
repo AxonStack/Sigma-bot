@@ -15,17 +15,17 @@ export function Hero() {
       <div className="absolute inset-0 bg-grid opacity-[0.06]" />
       <div
         className="blob absolute -left-16 top-24 h-[300px] w-[300px] opacity-40"
-        style={{ background: "rgba(255, 40, 96, 0.32)" }}
+        style={{ background: "rgba(11, 255, 80, 0.24)" }}
       />
       <div
         className="blob-slow absolute right-[-40px] top-10 h-[320px] w-[320px] opacity-35"
-        style={{ background: "rgba(255, 112, 176, 0.28)" }}
+        style={{ background: "rgba(90, 255, 145, 0.22)" }}
       />
       <div
         className="absolute inset-x-0 top-0 h-[420px]"
         style={{
           background:
-            "radial-gradient(circle at 50% 0%, rgba(255, 42, 104, 0.24), transparent 50%)",
+            "radial-gradient(circle at 50% 0%, rgba(14, 255, 85, 0.18), transparent 50%)",
         }}
       />
 
@@ -37,7 +37,7 @@ export function Hero() {
           className="mx-auto max-w-4xl text-center"
         >
           <div className="mb-6 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-medium uppercase tracking-[0.18em] text-white/60 sm:mb-8 sm:px-4 sm:text-[11px] sm:tracking-[0.28em]">
-            <span className="h-2 w-2 rounded-full bg-[#ff5e8f] shadow-[0_0_14px_rgba(255,94,143,0.8)]" />
+            <span className="h-2 w-2 rounded-full bg-[#21ff66] shadow-[0_0_14px_rgba(33,255,102,0.8)]" />
             OpenBet live on Base
           </div>
 
@@ -91,8 +91,8 @@ export function Hero() {
                   Will ETH reclaim a yearly high before June closes?
                 </p>
               </div>
-              <div className="mt-6 shrink-0 flex min-w-[7.6rem] flex-col items-center justify-center rounded-full border border-[#ff7aa7]/30 bg-[#ff4677]/12 px-3 py-2.5 text-center sm:mt-0 sm:min-w-[8.5rem] sm:px-4">
-                <p className="text-[9px] uppercase leading-none tracking-[0.18em] text-[#ffc0d4] sm:text-[10px] sm:tracking-[0.22em]">
+              <div className="mt-6 shrink-0 flex min-w-[7.6rem] flex-col items-center justify-center rounded-full border border-[#63ff97]/30 bg-[#1eff63]/12 px-3 py-2.5 text-center sm:mt-0 sm:min-w-[8.5rem] sm:px-4">
+                <p className="text-[9px] uppercase leading-none tracking-[0.18em] text-[#c7ffd6] sm:text-[10px] sm:tracking-[0.22em]">
                   Yes
                 </p>
                 <p className="mt-1.5 text-lg font-semibold leading-none text-white sm:text-[1.75rem]">

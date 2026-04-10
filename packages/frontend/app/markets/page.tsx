@@ -124,15 +124,15 @@ export default function MarketsPage() {
   const paginatedMarkets = markets.slice((effectivePage - 1) * PAGE_SIZE, effectivePage * PAGE_SIZE);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#050103] text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#040704] text-white">
       <div className="absolute inset-0 bg-grid opacity-[0.05]" />
       <div
         className="pointer-events-none absolute right-0 top-0 h-[500px] w-[500px] rounded-full opacity-25 blur-3xl blob-slow"
-        style={{ background: "rgba(255, 59, 107, 0.16)" }}
+        style={{ background: "rgba(15, 230, 78, 0.14)" }}
       />
       <div
         className="pointer-events-none absolute bottom-0 left-0 h-[420px] w-[420px] rounded-full opacity-20 blur-3xl blob-slow"
-        style={{ background: "rgba(127, 29, 29, 0.18)" }}
+        style={{ background: "rgba(74, 222, 128, 0.12)" }}
       />
 
       <Navbar />
@@ -167,7 +167,7 @@ export default function MarketsPage() {
                     onClick={() => setView("list")}
                     className={[
                       "p-1.5 transition-colors duration-100",
-                      view === "list" ? "bg-white text-black" : "text-white/55 hover:text-white",
+                      view === "list" ? "bg-emerald-300 text-[#041006]" : "text-white/55 hover:text-white",
                     ].join(" ")}
                     aria-label="List view"
                   >
@@ -179,7 +179,7 @@ export default function MarketsPage() {
                     onClick={() => setView("grid")}
                     className={[
                       "p-1.5 transition-colors duration-100",
-                      view === "grid" ? "bg-white text-black" : "text-white/55 hover:text-white",
+                      view === "grid" ? "bg-emerald-300 text-[#041006]" : "text-white/55 hover:text-white",
                     ].join(" ")}
                     aria-label="Grid view"
                   >
