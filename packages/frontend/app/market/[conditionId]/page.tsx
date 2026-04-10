@@ -246,13 +246,13 @@ export default function MarketPage() {
 
   return (
     <MarketPageShell>
-      <div className="relative max-w-7xl mx-auto px-6 pb-20 lg:grid lg:grid-cols-[1fr_380px] lg:gap-8">
+      <div className="relative mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:grid lg:grid-cols-[1fr_380px] lg:gap-8">
         <div>
           {/* ── Question Card ────────────────────────────────────────────── */}
           <motion.div {...stagger(0)} className="mb-4">
             <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-6 backdrop-blur-xl md:p-8">
               {/* Top row: status + deadline */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <span className="flex items-center gap-1.5 text-[11px] font-medium text-white/50">
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${
@@ -319,7 +319,7 @@ export default function MarketPage() {
           </motion.div>
 
           {/* ── Info Cards (Deadline + Liquidity) ────────────────────────── */}
-          <motion.div {...stagger(0.14)} className="grid grid-cols-2 gap-4 mb-4">
+          <motion.div {...stagger(0.14)} className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {/* Deadline */}
             <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
               <p className="mb-3 text-xs font-medium text-white/45">

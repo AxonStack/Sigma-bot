@@ -10,15 +10,15 @@ const tokenMetrics = [
 
 export function Flywheel() {
   return (
-    <section id="tokenomics" className="px-6 py-20 sm:px-8 md:py-24">
-      <div className="mx-auto max-w-6xl rounded-[36px] border border-white/10 bg-white/[0.03] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.36)] backdrop-blur-xl sm:p-8 md:p-10">
+    <section id="tokenomics" className="px-4 py-14 sm:px-8 sm:py-20 md:py-24">
+      <div className="mx-auto max-w-6xl rounded-[28px] border border-white/10 bg-white/[0.03] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.36)] backdrop-blur-xl sm:rounded-[36px] sm:p-8 md:p-10">
         <ScrollReveal>
           <div className="max-w-3xl">
             <p className="text-[11px] uppercase tracking-[0.28em] text-white/38">Tokenomics</p>
-            <h2 className="mt-4 font-display text-4xl tracking-[-0.04em] text-white sm:text-5xl">
+            <h2 className="mt-4 font-display text-[2.45rem] leading-[0.98] tracking-[-0.05em] text-white sm:text-5xl">
               Minimal on the surface. Reinforcing underneath.
             </h2>
-            <p className="mt-5 text-base leading-8 text-white/62">
+            <p className="mt-5 text-[15px] leading-7 text-white/62 sm:text-base sm:leading-8">
               OpenBet is designed so market activity supports the token layer instead of sitting beside
               it. New demand, buyback pressure, and tighter circulating supply are meant to compound as
               the platform opens more markets.

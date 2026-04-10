@@ -31,31 +31,36 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6">
+      <nav className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-6 sm:pt-4">
         <div
-          className={`mx-auto max-w-7xl rounded-[30px] border px-4 py-3 transition-[background-color,border-color,transform] duration-200 sm:px-5 ${
+          className={`mx-auto max-w-7xl rounded-[26px] border px-4 py-3 transition-[background-color,border-color,transform] duration-200 sm:rounded-[30px] sm:px-5 ${
             scrolled
               ? "border-white/12 bg-black/70 backdrop-blur-xl"
               : "border-white/10 bg-black/40 backdrop-blur-lg"
           }`}
         >
-          <div className="grid items-center gap-4 md:grid-cols-[auto_1fr_auto]">
-            <Link href="/" className="flex items-center gap-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 md:grid-cols-[auto_1fr_auto] md:gap-4">
+            <Link href="/" className="flex min-w-0 items-center gap-3">
               <div className="relative">
                 <div className="absolute inset-0 rounded-2xl bg-[#ff3b6b]/30 blur-xl" />
                 <Image
                   src="/logo.png"
                   alt="OpenBet"
-                  width={38}
-                  height={38}
-                  className="relative rounded-2xl border border-white/10"
+                  width={34}
+                  height={34}
+                  className="relative rounded-2xl border border-white/10 sm:h-[38px] sm:w-[38px]"
                 />
               </div>
-              <div>
-                <div className="font-display text-lg font-semibold tracking-tight text-white">
-                  OpenBet
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className="truncate font-display text-[15px] font-semibold tracking-tight text-white sm:text-lg">
+                    OpenBet
+                  </div>
+                  <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-amber-300/20 bg-amber-300/10 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200 sm:px-2.5 sm:tracking-[0.22em]">
+                    Beta
+                  </span>
                 </div>
-                <div className="text-[11px] uppercase tracking-[0.28em] text-white/40">
+                <div className="truncate text-[9px] uppercase tracking-[0.2em] text-white/40 sm:text-[11px] sm:tracking-[0.28em]">
                   Live on Base
                 </div>
               </div>
@@ -88,7 +93,7 @@ export function Navbar() {
             <button
               type="button"
               onClick={() => setMobileOpen((current) => !current)}
-              className="ml-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white md:hidden"
+              className="ml-auto inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white md:hidden"
               aria-label="Toggle menu"
             >
               <div className="flex w-5 flex-col gap-[5px]">
@@ -120,7 +125,7 @@ export function Navbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-0 z-40 bg-[#050103]/96 px-6 pt-28 backdrop-blur-xl md:hidden"
+            className="fixed inset-0 z-40 bg-[#050103]/96 px-4 pt-24 backdrop-blur-xl sm:px-6 md:hidden"
           >
             <div className="mx-auto max-w-sm rounded-[28px] border border-white/10 bg-white/[0.03] p-6">
               <div className="flex flex-col gap-5">

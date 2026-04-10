@@ -22,22 +22,22 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="px-6 py-20 sm:px-8 md:py-24">
+    <section id="how-it-works" className="px-4 py-14 sm:px-8 sm:py-20 md:py-24">
       <div className="mx-auto max-w-6xl">
         <ScrollReveal>
           <div className="max-w-2xl">
             <p className="text-[11px] uppercase tracking-[0.28em] text-white/38">How it works</p>
-            <h2 className="mt-4 font-display text-4xl tracking-[-0.04em] text-white sm:text-5xl">
+            <h2 className="mt-4 font-display text-[2.45rem] leading-[0.98] tracking-[-0.05em] text-white sm:text-5xl">
               A faster path from idea to live market.
             </h2>
-            <p className="mt-4 max-w-xl text-base leading-8 text-white/62">
+            <p className="mt-4 max-w-xl text-[15px] leading-7 text-white/62 sm:text-base sm:leading-8">
               The product stays simple on purpose: cleaner creation, instant access to liquidity, and
               a resolution path that is easy to read before anyone trades.
             </p>
           </div>
         </ScrollReveal>
 
-        <div className="mt-12 grid gap-10 border-t border-white/10 pt-8 md:grid-cols-3 md:gap-8">
+        <div className="mt-10 grid gap-8 border-t border-white/10 pt-8 md:grid-cols-3 md:gap-8">
           {steps.map((step, index) => (
             <ScrollReveal key={step.number} delay={index * 0.08}>
               <article className="relative pr-4">

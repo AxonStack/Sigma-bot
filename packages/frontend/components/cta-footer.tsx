@@ -1,18 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ScrollReveal } from "./scroll-reveal";
-import { CreateMarketModal } from "./create-market-modal";
 
 export function CTAFooter() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   return (
     <>
-      <CreateMarketModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-
       <section className="px-6 pb-8 pt-12 sm:px-8 md:pb-10 md:pt-20">
         <div className="mx-auto max-w-6xl border-t border-white/10 pt-10">
           <ScrollReveal>
@@ -30,10 +24,14 @@ export function CTAFooter() {
               <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(true)}
-                  className="button-primary rounded-full px-7 py-4 text-sm font-semibold uppercase tracking-[0.2em]"
+                  disabled
+                  aria-disabled="true"
+                  className="button-primary flex-col rounded-full px-7 py-3 text-sm font-semibold uppercase tracking-[0.2em]"
                 >
-                  Launch a market
+                  <span>Launch a market</span>
+                  <span className="text-[10px] tracking-[0.24em] text-current/70">
+                    Coming soon
+                  </span>
                 </button>
                 <Link
                   href="/markets"
@@ -64,12 +62,12 @@ export function CTAFooter() {
           </div>
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-white/56">
-            <a href="#how-it-works" className="transition-colors duration-200 hover:text-white">
+            <Link href="/#how-it-works" className="transition-colors duration-200 hover:text-white">
               How it works
-            </a>
-            <a href="#tokenomics" className="transition-colors duration-200 hover:text-white">
+            </Link>
+            <Link href="/#tokenomics" className="transition-colors duration-200 hover:text-white">
               Tokenomics
-            </a>
+            </Link>
             <a
               href="https://flaunch.gg/base/coin/0x5178f9df8274d76841aadb13f22e0f7fa7f219a0"
               target="_blank"
