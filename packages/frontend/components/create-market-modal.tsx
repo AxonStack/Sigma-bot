@@ -127,11 +127,11 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-lg bg-white rounded-3xl p-8 shadow-2xl"
+        className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#08100b] p-8 shadow-[0_30px_90px_rgba(0,0,0,0.5)]"
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-display text-navy">AI Market Architect</h2>
-          <button onClick={onClose} className="text-slate hover:text-navy transition-colors">
+          <h2 className="text-2xl font-display text-white">AI Market Architect</h2>
+          <button onClick={onClose} className="text-white/45 hover:text-white transition-colors">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
@@ -139,19 +139,19 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
         </div>
 
         <div className="space-y-6">
-          <p className="text-slate">Describe the market you want to build. Our AI will handle the categories, end-dates, and verification sources.</p>
+          <p className="text-white/62">Describe the market you want to build. Our AI will handle the categories, end-dates, and verification sources.</p>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="e.g., Will it be snowing in London on Christmas 2025?"
-            className="w-full h-32 p-4 rounded-2xl bg-ice border border-navy/5 focus:border-base-blue/30 focus:ring-0 outline-none transition-all resize-none text-navy"
+            className="w-full h-32 resize-none rounded-2xl border border-white/10 bg-[#121615] p-4 text-white outline-none transition-all placeholder:text-white/28 focus:border-white/18 focus:ring-0"
           />
           
           {!generated ? (
             <button
               onClick={handleGenerateAndDeploy}
               disabled={loading || !prompt.trim()}
-              className="w-full py-4 bg-navy text-white rounded-full font-semibold hover:bg-base-blue transition-all disabled:opacity-50"
+              className="w-full rounded-full bg-white/12 py-4 font-semibold text-white transition-all hover:bg-emerald-500 hover:text-[#041006] disabled:opacity-50"
             >
               {loading ? phase : `Generate & Deploy (${GENERATION_FEE_USDC} USDC)`}
             </button>
@@ -167,38 +167,38 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
                 animate={{ opacity: 1, height: "auto" }}
                 className="space-y-6 mt-6"
               >
-                <div className="p-6 rounded-2xl bg-ice/50 border border-navy/5">
-                  <h3 className="font-semibold text-navy mb-2">{generated.question}</h3>
-                  <p className="text-sm text-slate mb-4">{generated.description}</p>
+                <div className="rounded-2xl border border-white/10 bg-[#0d1710] p-6">
+                  <h3 className="mb-2 font-semibold text-white">{generated.question}</h3>
+                  <p className="mb-4 text-sm text-white/62">{generated.description}</p>
                   <div className="grid grid-cols-2 gap-4 text-xs font-mono">
                     <div>
-                      <span className="block text-slate/60 uppercase">Settlement Date</span>
-                      <span className="text-navy">{new Date(generated.endTime * 1000).toLocaleDateString()}</span>
+                      <span className="block uppercase text-white/38">Settlement Date</span>
+                      <span className="text-white">{new Date(generated.endTime * 1000).toLocaleDateString()}</span>
                     </div>
                     <div>
-                      <span className="block text-slate/60 uppercase">Oracle Source</span>
-                      <span className="text-navy truncate block">{generated.resolutionSource}</span>
+                      <span className="block uppercase text-white/38">Oracle Source</span>
+                      <span className="block truncate text-white">{generated.resolutionSource}</span>
                     </div>
                   </div>
                 </div>
 
                 {txHash ? (
-                  <div className="text-center p-4 bg-green-50 text-green-700 rounded-2xl shadow-sm border border-green-200">
-                    <p className="font-bold text-lg mb-1">🎉 Market Successfully Deployed!</p>
-                    <a href={`https://sepolia.basescan.org/tx/${txHash}`} target="_blank" rel="noreferrer" className="text-sm text-green-600 hover:underline">
+                  <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-center text-emerald-100 shadow-sm">
+                    <p className="mb-1 text-lg font-bold">Market Successfully Deployed!</p>
+                    <a href={`https://sepolia.basescan.org/tx/${txHash}`} target="_blank" rel="noreferrer" className="text-sm text-emerald-300 hover:underline">
                       View Tx: {txHash.slice(0, 10)}...{txHash.slice(-8)}
                     </a>
                   </div>
                 ) : loading ? (
                   <div className="text-center p-4">
-                    <p className="text-base-blue font-semibold animate-pulse">{phase}</p>
+                    <p className="animate-pulse font-semibold text-emerald-300">{phase}</p>
                   </div>
                 ) : null}
                 
                 {txHash && (
                   <button 
                     onClick={() => { setGenerated(null); setPrompt(""); setTxHash(null); }}
-                    className="w-full text-sm text-slate hover:text-navy transition-colors font-medium border border-slate/20 rounded-full py-2 mt-2"
+                    className="mt-2 w-full rounded-full border border-white/12 py-2 text-sm font-medium text-white/68 transition-colors hover:border-emerald-400/30 hover:text-white"
                   >
                     Create Another Market
                   </button>

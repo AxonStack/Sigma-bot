@@ -8,6 +8,7 @@ import { WalletPill } from "./wallet-pill";
 
 const navLinks = [
   { href: "/markets", label: "Markets" },
+  { href: "/docs", label: "Docs" },
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/#tokenomics", label: "Tokenomics" },
 ];
