@@ -44,7 +44,7 @@ export function Navbar() {
               <div className="relative">
                 <div className="absolute inset-0 rounded-2xl bg-[#ff3b6b]/30 blur-xl" />
                 <Image
-                  src="/logo.png"
+                  src="/openbet.jpg"
                   alt="OpenBet"
                   width={34}
                   height={34}

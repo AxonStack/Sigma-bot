@@ -49,7 +49,7 @@ export function CTAFooter() {
         <div className="mx-auto flex max-w-6xl flex-col gap-8 border-t border-white/10 py-8 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <Image
-              src="/logo.png"
+              src="/openbet.jpg"
               alt="OpenBet"
               width={32}
               height={32}

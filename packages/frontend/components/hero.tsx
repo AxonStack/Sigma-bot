@@ -91,7 +91,7 @@ export function Hero() {
                   Will ETH reclaim a yearly high before June closes?
                 </p>
               </div>
-              <div className="mt-6 shrink-0 flex min-w-[7.6rem] flex-col items-center justify-center rounded-full border border-[#ff7aa7]/30 bg-[#ff4677]/12 px-3 py-2.5 text-center sm:mt-10 sm:min-w-[8.5rem] sm:px-4">
+              <div className="mt-6 shrink-0 flex min-w-[7.6rem] flex-col items-center justify-center rounded-full border border-[#ff7aa7]/30 bg-[#ff4677]/12 px-3 py-2.5 text-center sm:mt-0 sm:min-w-[8.5rem] sm:px-4">
                 <p className="text-[9px] uppercase leading-none tracking-[0.18em] text-[#ffc0d4] sm:text-[10px] sm:tracking-[0.22em]">
                   Yes
                 </p>
