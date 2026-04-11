@@ -119,5 +119,16 @@
     "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
     "yes_token_supply": "499952450401693304",
     "no_token_supply": "500047549598306695"
+  },
+  {
+    "market_address": "0x7349768917c568aea169ea99a60477cef83dfb5aa290dc5db068ed6b0740e90a",
+    "question": "Will BNB reach an all-time high by the end of 2026?",
+    "description": "This market predicts whether Binance Coin (BNB) will reach a new all-time high price by the end of the year 2026. An all-time high means BNB's price surpasses its prior record peak according to publicly available data.",
+    "market_endTime": "2026-04-18T06:53:22.000Z",
+    "creator": "0x92f77d44895c22618d1515c3446a9a18559166f8",
+    "market_createdTime": "2026-04-11T06:53:28.094Z",
+    "collateralToken": "0xCf9f6587E51D8650D04fAc0f580cD539450090A1",
+    "yes_token_supply": "500000000000000000",
+    "no_token_supply": "500000000000000000"
   }
 ]

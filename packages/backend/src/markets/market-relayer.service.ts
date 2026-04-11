@@ -52,6 +52,7 @@ export class MarketRelayerService {
     endTime: number;
     initialLiquidity: string;
     collateralToken: string;
+    creatorAddress?: string;
     userPaymentTxHash?: string;
   }, retryCount = 0): Promise<{ txHash: string; conditionId: string }> {
     const rpcUrl = this.config.get<string>('RPC_URL');
@@ -118,6 +119,7 @@ export class MarketRelayerService {
       }).find((ev: any) => ev?.name === 'OPENBET_MarketCreated');
 
       const conditionId = event?.args?.conditionId || '0x...';
+      const creatorAddress = await this.resolveCreatorAddress(provider, params, relayerWallet.address);
 
       // 6. Save Metadata (Supabase + JSON)
       await this.saveMarketMetadata({
@@ -125,7 +127,7 @@ export class MarketRelayerService {
         question: params.question,
         description: params.description,
         endTime: params.endTime,
-        creator: relayerWallet.address,
+        creator: creatorAddress,
         collateralToken: params.collateralToken,
       });
 
@@ -147,6 +149,32 @@ export class MarketRelayerService {
       this.logger.error('Failed to execute market creation', error.message);
       throw new BadRequestException(`On-chain error: ${error.message}`);
     }
+  }
+
+  /**
+   * Saves the market metadata to Supabase and a local JSON file.
+   */
+  private async resolveCreatorAddress(
+    provider: JsonRpcProvider,
+    params: { creatorAddress?: string; userPaymentTxHash?: string },
+    fallbackAddress: string,
+  ): Promise<string> {
+    if (params.userPaymentTxHash) {
+      try {
+        const paymentTx = await provider.getTransaction(params.userPaymentTxHash);
+        if (paymentTx?.from) {
+          return paymentTx.from.toLowerCase();
+        }
+      } catch (e) {
+        this.logger.warn(`Failed to resolve creator from payment tx ${params.userPaymentTxHash}`);
+      }
+    }
+
+    if (params.creatorAddress) {
+      return params.creatorAddress.toLowerCase();
+    }
+
+    return fallbackAddress.toLowerCase();
   }
 
   /**

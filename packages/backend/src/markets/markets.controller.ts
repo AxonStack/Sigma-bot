@@ -33,6 +33,7 @@ export class MarketsController {
     endTime: number;
     initialLiquidity: string;
     collateralToken: string;
+    creatorAddress?: string;
     userPaymentTxHash?: string;
   }) {
     return this.relayerService.executeMarketCreation(body);

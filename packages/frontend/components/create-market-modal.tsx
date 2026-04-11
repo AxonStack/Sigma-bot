@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useWriteContract } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import { parseUnits } from "viem";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  createMarketRequestEntry,
+  updateMarketRequestEntry,
+} from "@/lib/market-request-store";
 
 function cleanEnv(value: string | undefined): string {
   return (value ?? "").trim();
@@ -37,26 +41,20 @@ interface GeneratedMarket {
   resolutionSource: string;
 }
 
-const AUTO_REFRESH_DELAY_MS = 1800;
+const REVIEW_MINUTES_MIN = 5;
+const REVIEW_MINUTES_MAX = 10;
 
 export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const router = useRouter();
+  const { address } = useAccount();
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState("");
   const [generated, setGenerated] = useState<GeneratedMarket | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { writeContractAsync } = useWriteContract();
-
-  const clearRefreshTimeout = () => {
-    if (refreshTimeoutRef.current) {
-      clearTimeout(refreshTimeoutRef.current);
-      refreshTimeoutRef.current = null;
-    }
-  };
 
   const resetState = () => {
     setPrompt("");
@@ -67,29 +65,71 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
     setTxHash(null);
   };
 
-  const closeAndRefresh = () => {
-    clearRefreshTimeout();
+  const closeAndReset = () => {
     resetState();
     onClose();
-    router.refresh();
-    window.location.reload();
   };
 
-  const scheduleRefresh = () => {
-    clearRefreshTimeout();
-    refreshTimeoutRef.current = setTimeout(() => {
-      closeAndRefresh();
-    }, AUTO_REFRESH_DELAY_MS);
+  const getReviewEndsAt = () => {
+    const durationMinutes =
+      REVIEW_MINUTES_MIN +
+      Math.floor(Math.random() * (REVIEW_MINUTES_MAX - REVIEW_MINUTES_MIN + 1));
+    return Date.now() + durationMinutes * 60 * 1000;
   };
 
-  useEffect(() => {
-    return () => {
-      clearRefreshTimeout();
-    };
-  }, []);
+  const runReviewWorkflow = async (requestId: string, paymentTxHash: string, originalPrompt: string) => {
+    try {
+      const genResponse = await axios.post(`${BACKEND_URL}/markets/generate`, {
+        prompt: originalPrompt,
+      });
+
+      const marketData = genResponse.data as GeneratedMarket;
+
+      updateMarketRequestEntry(requestId, {
+        question: marketData.question || originalPrompt,
+        description: marketData.description,
+        endTime: marketData.endTime,
+        resolutionSource: marketData.resolutionSource,
+      });
+
+      if (!marketData.resolvable) {
+        updateMarketRequestEntry(requestId, {
+          status: "rejected",
+          resolutionMessage:
+            marketData.reason || "Question is not objectively verifiable.",
+        });
+        return;
+      }
+
+      const execResponse = await axios.post(`${BACKEND_URL}/markets/execute-creation`, {
+        ...marketData,
+        collateralToken: OPENBET_ADDRESS,
+        initialLiquidity: "100",
+        creatorAddress: address,
+        userPaymentTxHash: paymentTxHash,
+      });
+
+      updateMarketRequestEntry(requestId, {
+        status: "deployed",
+        txHash: execResponse.data.txHash,
+        conditionId: execResponse.data.conditionId,
+      });
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message || err.message
+        : err instanceof Error
+          ? err.message
+          : "Market review failed.";
+
+      updateMarketRequestEntry(requestId, {
+        status: "rejected",
+        resolutionMessage: message,
+      });
+    }
+  };
 
   const handleGenerateAndDeploy = async () => {
-    if (!prompt.trim() || !BACKEND_URL || !BACKEND_WALLET || !OPENBET_ADDRESS || !USDC_ADDRESS) {
+    if (!prompt.trim() || !BACKEND_URL || !BACKEND_WALLET || !OPENBET_ADDRESS || !USDC_ADDRESS || !address) {
       setError("OpenBet env configuration is incomplete.");
       return;
     }
@@ -102,7 +142,7 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
     try {
       // Step 1: User pays the fee first
       setPhase("Confirming fee payment in wallet...");
-      const tx = await writeContractAsync({
+      const paymentTxHash = await writeContractAsync({
         address: USDC_ADDRESS,
         abi: [
           {
@@ -123,33 +163,17 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
         ],
       });
 
-      // Step 2: Generate market via AI
-      setPhase("AI is architecting your market...");
-      const genResponse = await axios.post(`${BACKEND_URL}/markets/generate`, {
+      const requestEntry = createMarketRequestEntry({
+        creator: address,
         prompt,
-      });
-      
-      const marketData = genResponse.data;
-      if (!marketData.resolvable) {
-        setError(`AI Rejected: ${marketData.reason || "Question is not objectively verifiable."} (Note: Creation fee captured)`);
-        setLoading(false);
-        scheduleRefresh();
-        return;
-      }
-      
-      setGenerated(marketData);
-
-      // Step 3: Deploy on-chain via Relayer
-      setPhase("Deploying to Base...");
-      const execResponse = await axios.post(`${BACKEND_URL}/markets/execute-creation`, {
-        ...marketData,
-        collateralToken: OPENBET_ADDRESS,
-        initialLiquidity: "100", 
-        userPaymentTxHash: tx,
+        reviewEndsAt: getReviewEndsAt(),
       });
 
-      setTxHash(execResponse.data.txHash);
-      scheduleRefresh();
+      void runReviewWorkflow(requestEntry.id, paymentTxHash, prompt);
+
+      resetState();
+      onClose();
+      router.push("/markets?scope=mine");
     } catch (err: unknown) {
       const message = axios.isAxiosError(err)
         ? err.response?.data?.message || err.message
@@ -157,7 +181,6 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
           ? err.message
           : "Process failed. Ensure you have USDC balance and approved the transaction.";
       setError(message);
-      scheduleRefresh();
     } finally {
       setLoading(false);
       setPhase("");
@@ -176,7 +199,7 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-display text-white">AI Market Architect</h2>
-          <button onClick={closeAndRefresh} className="text-white/45 hover:text-white transition-colors">
+          <button onClick={closeAndReset} className="text-white/45 hover:text-white transition-colors">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
@@ -198,7 +221,7 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
               disabled={loading || !prompt.trim()}
               className="w-full rounded-full bg-white/12 py-4 font-semibold text-white transition-all hover:bg-emerald-500 hover:text-[#041006] disabled:opacity-50"
             >
-              {loading ? phase : `Generate & Deploy (${GENERATION_FEE_USDC} USDC)`}
+              {loading ? phase : `Submit For Review (${GENERATION_FEE_USDC} USDC)`}
             </button>
           ) : null}
 

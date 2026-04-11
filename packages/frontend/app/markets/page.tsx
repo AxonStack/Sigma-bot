@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { useAccount } from "wagmi";
 import { Navbar } from "@/components/navbar";
 import { MARKETS_API } from "@/lib/config";
+import {
+  getMarketRequestsForCreator,
+  MARKET_REQUESTS_UPDATED_EVENT,
+  type MarketRequestEntry,
+} from "@/lib/market-request-store";
 
 type Market = {
   createdAt: string;
@@ -14,6 +21,12 @@ type Market = {
   question: string;
   yes_odds?: number;
   no_odds?: number;
+};
+
+type RequestPresentation = {
+  badge: string;
+  tone: string;
+  copy: string;
 };
 
 function conditionIdFromAddress(marketAddress: string): string {
@@ -84,12 +97,42 @@ function formatTimeLeft(
 
 const PAGE_SIZE = 12;
 
+function getRequestPresentation(entry: MarketRequestEntry, now: number): RequestPresentation {
+  if (now < entry.reviewEndsAt) {
+    return {
+      badge: "AI reviewing",
+      tone: "border-amber-400/20 bg-amber-400/10 text-amber-200",
+      copy: "An agent is reviewing your market request.",
+    };
+  }
+
+  if (entry.status === "deployed") {
+    return {
+      badge: "Successfully deployed",
+      tone: "border-emerald-400/20 bg-emerald-400/10 text-emerald-200",
+      copy: "Your market passed review and was deployed.",
+    };
+  }
+
+  return {
+    badge: "Rejected",
+    tone: "border-red-400/20 bg-red-400/10 text-red-200",
+    copy: entry.resolutionMessage || "This market request was rejected during review.",
+  };
+}
+
 export default function MarketsPage() {
+  const searchParams = useSearchParams();
+  const { address } = useAccount();
   const [markets, setMarkets] = useState<Market[]>([]);
+  const [requestEntries, setRequestEntries] = useState<MarketRequestEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "grid">("grid");
   const [page, setPage] = useState(1);
+  const [now, setNow] = useState(0);
+  const scope = searchParams.get("scope");
+  const isMyMarketsView = scope === "mine";
 
   useEffect(() => {
     let cancelled = false;
@@ -114,14 +157,47 @@ export default function MarketsPage() {
     };
   }, []);
 
-  const liveCount = markets.filter((market) => {
+  useEffect(() => {
+    if (!isMyMarketsView || !address) return;
+
+    const syncRequests = () => {
+      setRequestEntries(getMarketRequestsForCreator(address));
+      setNow(Date.now());
+    };
+
+    syncRequests();
+
+    const intervalId = window.setInterval(() => {
+      syncRequests();
+    }, 15000);
+
+    window.addEventListener(MARKET_REQUESTS_UPDATED_EVENT, syncRequests);
+    window.addEventListener("storage", syncRequests);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener(MARKET_REQUESTS_UPDATED_EVENT, syncRequests);
+      window.removeEventListener("storage", syncRequests);
+    };
+  }, [address, isMyMarketsView]);
+
+  const filteredMarkets = useMemo(() => {
+    if (!isMyMarketsView) return markets;
+    if (!address) return [];
+
+    return markets.filter(
+      (market) => market.creator?.toLowerCase() === address.toLowerCase(),
+    );
+  }, [address, isMyMarketsView, markets]);
+
+  const liveCount = filteredMarkets.filter((market) => {
     const tl = formatTimeLeft(market);
     return tl && tl.primary !== "Ended";
   }).length;
 
-  const totalPages = Math.max(1, Math.ceil(markets.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filteredMarkets.length / PAGE_SIZE));
   const effectivePage = Math.min(page, totalPages);
-  const paginatedMarkets = markets.slice((effectivePage - 1) * PAGE_SIZE, effectivePage * PAGE_SIZE);
+  const paginatedMarkets = filteredMarkets.slice((effectivePage - 1) * PAGE_SIZE, effectivePage * PAGE_SIZE);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#040704] text-white">
@@ -139,21 +215,26 @@ export default function MarketsPage() {
 
       <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6 md:pt-28">
         <div className="mb-8">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-white/38">OpenBet board</p>
+          <p className="text-[11px] uppercase tracking-[0.28em] text-white/38">
+            {isMyMarketsView ? "Creator board" : "OpenBet board"}
+          </p>
           <div className="mt-3 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
               <h1 className="font-display text-3xl tracking-tight text-white md:text-4xl">
-                Live markets
+                {isMyMarketsView ? "My markets" : "Live markets"}
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-white/56">
-                The market board now follows the landing-page shell: dark base, quieter cards, green for
-                yes, red for no.
+                {isMyMarketsView
+                  ? address
+                    ? "Markets created by your connected wallet are shown here."
+                    : "Connect your wallet to see the markets you created."
+                  : "The market board now follows the landing-page shell: dark base, quieter cards, green for yes, red for no."}
               </p>
             </div>
 
-            {!loading && !error && markets.length > 0 && (
+            {!loading && !error && filteredMarkets.length > 0 && (
               <div className="flex flex-wrap items-center gap-4 text-xs tabular-nums">
-                <span className="text-white/55">{markets.length} total</span>
+                <span className="text-white/55">{filteredMarkets.length} total</span>
                 <span className="flex items-center gap-1.5 font-medium text-white">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
@@ -206,14 +287,116 @@ export default function MarketsPage() {
           </div>
         )}
 
-        {!loading && !error && markets.length === 0 && (
+        {!loading && !error && isMyMarketsView && !address && (
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur-xl">
-            <p className="text-sm font-semibold text-white">No markets yet</p>
-            <p className="mt-1 text-xs text-white/55">Markets will appear here once created.</p>
+            <p className="text-sm font-semibold text-white">Connect your wallet</p>
+            <p className="mt-1 text-xs text-white/55">
+              Connect the wallet you used to create markets, then open My Markets again.
+            </p>
           </div>
         )}
 
-        {!loading && !error && markets.length > 0 && (
+        {!loading && !error && isMyMarketsView && !!address && requestEntries.length > 0 && (
+          <div className="mb-8">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.28em] text-white/38">
+                  Submission activity
+                </p>
+                <p className="mt-2 text-sm text-white/56">
+                  Requests in review, rejected requests, and recently deployed markets appear here.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {requestEntries.map((entry) => {
+                const presentation = getRequestPresentation(entry, now);
+                const reviewComplete = now >= entry.reviewEndsAt;
+                const showOpenMarket = reviewComplete && entry.status === "deployed" && !!entry.conditionId;
+                const showRejectedInfo = reviewComplete && entry.status === "rejected" && !!entry.resolutionMessage;
+
+                return (
+                  <div
+                    key={entry.id}
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.24)] backdrop-blur-xl"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="line-clamp-2 text-sm font-semibold leading-6 text-white">
+                          {entry.question || entry.prompt}
+                        </p>
+                        <p className="mt-2 text-xs text-white/42">
+                          Submitted {new Date(entry.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${presentation.tone}`}
+                      >
+                        {presentation.badge}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 flex items-start gap-2">
+                      <p className="text-sm leading-6 text-white/60">
+                        {reviewComplete && entry.status === "rejected"
+                          ? "Failed to create the market."
+                          : presentation.copy}
+                      </p>
+
+                      {showRejectedInfo ? (
+                        <div className="group relative mt-0.5 shrink-0">
+                          <button
+                            type="button"
+                            aria-label="Why it was rejected"
+                            className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/12 text-[11px] font-semibold text-white/48 transition-colors duration-200 hover:text-white"
+                          >
+                            i
+                          </button>
+                          <div className="pointer-events-none absolute left-1/2 top-7 z-10 w-64 -translate-x-1/2 rounded-xl border border-white/10 bg-[#0b100d] px-3 py-2 text-left text-xs leading-5 text-white/72 opacity-0 shadow-[0_16px_40px_rgba(0,0,0,0.35)] transition-opacity duration-150 group-hover:opacity-100">
+                            {entry.resolutionMessage}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {!reviewComplete ? (
+                      <p className="mt-3 text-xs text-white/40">
+                        Estimated review complete by {new Date(entry.reviewEndsAt).toLocaleTimeString()}
+                      </p>
+                    ) : null}
+
+                    {showOpenMarket ? (
+                      <div className="mt-4">
+                        <Link
+                          href={`/market/${conditionIdFromAddress(entry.conditionId)}`}
+                          className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300 transition-colors duration-200 hover:text-emerald-200"
+                        >
+                          Open market
+                        </Link>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && filteredMarkets.length === 0 && (!isMyMarketsView || !!address) && (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur-xl">
+            <p className="text-sm font-semibold text-white">
+              {isMyMarketsView ? "No markets launched by you yet" : "No markets yet"}
+            </p>
+            <p className="mt-1 text-xs text-white/55">
+              {isMyMarketsView
+                ? "Once one of your reviewed requests is deployed, it will appear here."
+                : "Markets will appear here once created."}
+            </p>
+          </div>
+        )}
+
+        {!loading && !error && filteredMarkets.length > 0 && (
           <>
             {view === "list" && (
               <>
