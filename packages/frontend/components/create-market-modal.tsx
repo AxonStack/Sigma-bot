@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useWalletClient } from "wagmi";
-import { parseUnits } from "viem";
+import { encodeFunctionData, parseUnits } from "viem";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { baseSepolia } from "wagmi/chains";
@@ -31,6 +31,18 @@ const OPENBET_ADDRESS = cleanEnv(
 ) as `0x${string}`;
 const USDC_ADDRESS = cleanEnv(process.env.NEXT_PUBLIC_USDC_ADDRESS) as `0x${string}`;
 const GENERATION_FEE_USDC = "5"; // 5 USDC fee
+const ERC20_TRANSFER_ABI = [
+  {
+    name: "transfer",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "recipient", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ type: "boolean" }],
+  },
+] as const;
 
 interface GeneratedMarket {
   resolvable: boolean;
@@ -92,27 +104,18 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
     try {
       // Step 1: User pays the fee first
       setPhase("Confirming fee payment in wallet...");
-      const paymentTxHash = await walletClient.writeContract({
+      const paymentTxHash = await walletClient.sendTransaction({
         account: address,
         chain: baseSepolia,
-        address: USDC_ADDRESS,
-        abi: [
-          {
-            name: "transfer",
-            type: "function",
-            stateMutability: "nonpayable",
-            inputs: [
-              { name: "recipient", type: "address" },
-              { name: "amount", type: "uint256" },
-            ],
-            outputs: [{ type: "boolean" }],
-          },
-        ],
-        functionName: "transfer",
-        args: [
-          BACKEND_WALLET as `0x${string}`,
-          parseUnits(GENERATION_FEE_USDC, 6), // USDC usually has 6 decimals
-        ],
+        to: USDC_ADDRESS,
+        data: encodeFunctionData({
+          abi: ERC20_TRANSFER_ABI,
+          functionName: "transfer",
+          args: [
+            BACKEND_WALLET as `0x${string}`,
+            parseUnits(GENERATION_FEE_USDC, 6),
+          ],
+        }),
         gas: BigInt(70_000),
       });
 
@@ -133,7 +136,8 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
           ? err.message
           : "Process failed. Ensure you have USDC balance and approved the transaction.";
       const message = rawMessage.includes("RPC endpoint returned too many errors")
-        ? "Base Sepolia RPC is overloaded right now. Retry in a moment or switch your wallet/provider to a dedicated Base Sepolia RPC."
+        || rawMessage.includes("Requested resource not available")
+        ? "Your wallet/provider could not broadcast the Base Sepolia payment. Retry in a moment, or switch your wallet/provider to a more reliable Base Sepolia RPC."
         : rawMessage;
       setError(message);
     } finally {
