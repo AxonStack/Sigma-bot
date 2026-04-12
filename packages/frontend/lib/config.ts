@@ -14,3 +14,4 @@ const MARKET_SERVICE_BASE = cleanEnv(
 export const MARKET_SERVICE_BASE_URL = MARKET_SERVICE_BASE;
 
 export const MARKETS_API = `${MARKET_SERVICE_BASE}/markets`;
+export const FAUCET_API = `${MARKET_SERVICE_BASE}/faucet`;

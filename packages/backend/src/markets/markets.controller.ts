@@ -3,6 +3,7 @@ import { SupabaseService } from '../supabase/supabase.service';
 import { MarketGenerationService } from './market-generation.service';
 import { MarketRelayerService } from './market-relayer.service';
 import { MarketPricesService } from '../market-sync/market-prices.service';
+import { SUPABASE_MARKET_REQUESTS_TABLE, SUPABASE_MARKET_JOBS_TABLE } from '../supabase/supabase.constants';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -25,6 +26,133 @@ export class MarketsController {
     private readonly relayerService: MarketRelayerService,
     private readonly pricesService: MarketPricesService,
   ) {}
+
+  @Get('markets/debug/inspect')
+  async inspectDb() {
+    const { data: requests } = await this.supabase
+      .getClawdbetClient()
+      .from(SUPABASE_MARKET_REQUESTS_TABLE)
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
+      
+    const { data: jobs } = await this.supabase
+      .getClawdbetClient()
+      .from(SUPABASE_MARKET_JOBS_TABLE)
+      .select('*')
+      .order('scheduled_for', { ascending: false })
+      .limit(20);
+      
+    return { requests, jobs };
+  }
+
+  @Get('markets/debug/reset-jobs')
+  async resetJobs() {
+    const { data, error } = await this.supabase
+      .getClawdbetClient()
+      .from(SUPABASE_MARKET_JOBS_TABLE)
+      .update({ status: 'scheduled' })
+      .eq('status', 'failed');
+      
+    if (error) throw new Error(`Failed to reset jobs: ${error.message}`);
+    return { success: true };
+  }
+
+  @Post('markets/request')
+  async createMarketRequest(@Body() body: {
+    prompt: string;
+    creator: string;
+    txHash: string;
+  }) {
+    if (!body.prompt || !body.creator || !body.txHash) {
+      throw new NotFoundException('Prompt, creator, and txHash are required');
+    }
+
+    // 1. Create the market request
+    const { data: request, error: requestError } = await this.supabase
+      .getClawdbetClient()
+      .from(SUPABASE_MARKET_REQUESTS_TABLE)
+      .insert([
+        {
+          prompt: body.prompt,
+          creator: body.creator.toLowerCase(),
+          tx_hash: body.txHash,
+          status: 'pending',
+        },
+      ])
+      .select()
+      .single();
+
+    if (requestError) throw new Error(`Failed to create request: ${requestError.message}`);
+
+    // 2. Schedule the first job (5 minutes from now)
+    const scheduledFor = new Date();
+    scheduledFor.setMinutes(scheduledFor.getMinutes() + 5);
+
+    const { error: jobError } = await this.supabase
+      .getClawdbetClient()
+      .from(SUPABASE_MARKET_JOBS_TABLE)
+      .insert([
+        {
+          market_request_id: request.id,
+          job_type: 'transition_to_evaluating',
+          status: 'scheduled',
+          scheduled_for: scheduledFor.toISOString(),
+        },
+      ]);
+
+    if (jobError) throw new Error(`Failed to schedule job: ${jobError.message}`);
+
+    return request;
+  }
+
+  @Get('markets/requests/:address')
+  async getMarketRequests(@Param('address') address: string) {
+    const { data, error } = await this.supabase
+      .getClawdbetClient()
+      .from(SUPABASE_MARKET_REQUESTS_TABLE)
+      .select('*')
+      .eq('creator', address.toLowerCase())
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Failed to fetch requests: ${error.message}`);
+
+    // Calculate simulated global queue info
+    const { count: realQueueCount } = await this.supabase
+      .getClawdbetClient()
+      .from(SUPABASE_MARKET_REQUESTS_TABLE)
+      .select('id', { count: 'exact', head: true })
+      .in('status', ['pending', 'evaluating']);
+
+    const totalQueue = (realQueueCount || 0) + 5 + Math.floor(Math.random() * 10);
+    const passedPending = (realQueueCount || 0) > 0 
+      ? Math.floor(Math.random() * totalQueue)
+      : Math.floor(Math.random() * 3);
+    
+    // Map to the frontend format expected by MarketRequestEntry
+    return (data || []).map(r => {
+      const isQueueStage = r.status === 'pending' || r.status === 'evaluating';
+      
+      return {
+        id: r.id,
+        creator: r.creator,
+        prompt: r.prompt,
+        question: r.question || r.prompt,
+        createdAt: new Date(r.created_at).getTime(),
+        reviewEndsAt: new Date(r.created_at).getTime() + (9 * 60 * 1000), // Approx 9 mins total
+        status: r.status === 'evaluating' ? 'reviewing' : r.status,
+        resolutionMessage: r.error_message,
+        description: r.description,
+        txHash: r.tx_hash,
+        conditionId: r.condition_id,
+        refundTxHash: r.refund_tx_hash,
+        queueInfo: isQueueStage ? {
+          current: passedPending,
+          total: totalQueue
+        } : undefined
+      };
+    });
+  }
 
   @Post('markets/execute-creation')
   async executeCreation(@Body() body: {

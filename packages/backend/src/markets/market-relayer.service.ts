@@ -22,7 +22,7 @@ export class MarketRelayerService {
   /**
    * Safe nonce acquisition with locking to prevent parallel collisions.
    */
-  private async getAtomicNonce(wallet: Wallet): Promise<number> {
+  public async getAtomicNonce(wallet: Wallet): Promise<number> {
     await this.nonceLock; // Wait for any existing tx to finish preparing
     
     let resolveLock: () => void;
@@ -243,5 +243,36 @@ export class MarketRelayerService {
     const base = parseFloat(baseTokenPrice);
     const commission = base * 0.1;
     return (base + commission).toString();
+  }
+
+  /**
+   * Refunds 2 USDC to the user if the market request is rejected.
+   */
+  async refundUSDC(to: string): Promise<string> {
+    const rpcUrl = this.config.get<string>('RPC_URL');
+    const privateKey = this.config.get<string>('WALLET_PRIVATE_KEY');
+    const usdcAddress = this.config.get<string>('USDC_ADDRESS');
+
+    if (!rpcUrl || !privateKey || !usdcAddress) {
+      throw new Error('Refund configuration is incomplete');
+    }
+
+    const provider = new JsonRpcProvider(rpcUrl);
+    const relayerWallet = new Wallet(privateKey, provider);
+    const token = new Contract(usdcAddress, ERC20_ABI, relayerWallet);
+    
+    const decimals = await token.decimals();
+    const amountToRefund = parseUnits('2', decimals);
+
+    this.logger.log(`Refunding 2 USDC to ${to}...`);
+    
+    const nonce = await this.getAtomicNonce(relayerWallet);
+    const tx = await token.transfer(to, amountToRefund, { nonce });
+    
+    this.logger.log(`Refund transaction sent: ${tx.hash}`);
+    await tx.wait();
+    this.logger.log(`Refund confirmed: ${tx.hash}`);
+    
+    return tx.hash;
   }
 }

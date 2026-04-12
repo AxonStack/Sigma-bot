@@ -1,6 +1,8 @@
 "use client";
 
-export type MarketRequestStatus = "reviewing" | "deployed" | "rejected";
+import axios from "axios";
+
+export type MarketRequestStatus = "pending" | "reviewing" | "deployed" | "rejected" | "failed";
 
 export type MarketRequestEntry = {
   id: string;
@@ -16,14 +18,15 @@ export type MarketRequestEntry = {
   resolutionSource?: string;
   txHash?: string;
   conditionId?: string;
+  refundTxHash?: string;
+  queueInfo?: {
+    current: number;
+    total: number;
+  };
 };
 
-const STORAGE_KEY = "openbet.market-requests.v1";
+const BACKEND_URL = process.env.NEXT_PUBLIC_CLAWDBET_MARKET_SERVICE_URL || "http://localhost:3001";
 export const MARKET_REQUESTS_UPDATED_EVENT = "openbet-market-requests-updated";
-
-function canUseStorage() {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
-}
 
 function dispatchUpdate() {
   if (typeof window !== "undefined") {
@@ -31,69 +34,37 @@ function dispatchUpdate() {
   }
 }
 
-export function getStoredMarketRequests(): MarketRequestEntry[] {
-  if (!canUseStorage()) return [];
-
+export async function getMarketRequestsForCreator(address: string | undefined): Promise<MarketRequestEntry[]> {
+  if (!address) return [];
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
+    const response = await axios.get(`${BACKEND_URL}/markets/requests/${address}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch market requests:", error);
     return [];
   }
 }
 
-function setStoredMarketRequests(entries: MarketRequestEntry[]) {
-  if (!canUseStorage()) return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-  dispatchUpdate();
-}
-
-export function createMarketRequestEntry(input: {
+export async function createMarketRequestEntry(input: {
   creator: string;
   prompt: string;
-  reviewEndsAt: number;
-}): MarketRequestEntry {
-  const now = Date.now();
-  const id =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `${now}-${Math.random().toString(36).slice(2, 10)}`;
-
-  const entry: MarketRequestEntry = {
-    id,
-    creator: input.creator.toLowerCase(),
-    prompt: input.prompt.trim(),
-    question: input.prompt.trim(),
-    createdAt: now,
-    reviewEndsAt: input.reviewEndsAt,
-    status: "reviewing",
-  };
-
-  const allEntries = getStoredMarketRequests();
-  setStoredMarketRequests([entry, ...allEntries]);
-  return entry;
+  txHash: string;
+}): Promise<MarketRequestEntry> {
+  try {
+    const response = await axios.post(`${BACKEND_URL}/markets/request`, {
+      prompt: input.prompt,
+      creator: input.creator,
+      txHash: input.txHash,
+    });
+    
+    dispatchUpdate();
+    return response.data;
+  } catch (error) {
+    console.error("Failed to create market request:", error);
+    throw error;
+  }
 }
 
-export function updateMarketRequestEntry(
-  id: string,
-  updates: Partial<MarketRequestEntry>,
-): MarketRequestEntry | null {
-  const allEntries = getStoredMarketRequests();
-  const nextEntries = allEntries.map((entry) =>
-    entry.id === id ? { ...entry, ...updates } : entry,
-  );
-
-  const updated = nextEntries.find((entry) => entry.id === id) ?? null;
-  setStoredMarketRequests(nextEntries);
-  return updated;
-}
-
-export function getMarketRequestsForCreator(address: string | undefined): MarketRequestEntry[] {
-  if (!address) return [];
-  const target = address.toLowerCase();
-  return getStoredMarketRequests()
-    .filter((entry) => entry.creator === target)
-    .sort((a, b) => b.createdAt - a.createdAt);
-}
+/** Legacy exports kept for compatibility during transition */
+export const getStoredMarketRequests = () => [];
+export const updateMarketRequestEntry = (id: string, updates: any) => null;

@@ -8,7 +8,6 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   createMarketRequestEntry,
-  updateMarketRequestEntry,
 } from "@/lib/market-request-store";
 
 function cleanEnv(value: string | undefined): string {
@@ -70,64 +69,6 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
     onClose();
   };
 
-  const getReviewEndsAt = () => {
-    const durationMinutes =
-      REVIEW_MINUTES_MIN +
-      Math.floor(Math.random() * (REVIEW_MINUTES_MAX - REVIEW_MINUTES_MIN + 1));
-    return Date.now() + durationMinutes * 60 * 1000;
-  };
-
-  const runReviewWorkflow = async (requestId: string, paymentTxHash: string, originalPrompt: string) => {
-    try {
-      const genResponse = await axios.post(`${BACKEND_URL}/markets/generate`, {
-        prompt: originalPrompt,
-      });
-
-      const marketData = genResponse.data as GeneratedMarket;
-
-      updateMarketRequestEntry(requestId, {
-        question: marketData.question || originalPrompt,
-        description: marketData.description,
-        endTime: marketData.endTime,
-        resolutionSource: marketData.resolutionSource,
-      });
-
-      if (!marketData.resolvable) {
-        updateMarketRequestEntry(requestId, {
-          status: "rejected",
-          resolutionMessage:
-            marketData.reason || "Question is not objectively verifiable.",
-        });
-        return;
-      }
-
-      const execResponse = await axios.post(`${BACKEND_URL}/markets/execute-creation`, {
-        ...marketData,
-        collateralToken: OPENBET_ADDRESS,
-        initialLiquidity: "100",
-        creatorAddress: address,
-        userPaymentTxHash: paymentTxHash,
-      });
-
-      updateMarketRequestEntry(requestId, {
-        status: "deployed",
-        txHash: execResponse.data.txHash,
-        conditionId: execResponse.data.conditionId,
-      });
-    } catch (err: unknown) {
-      const message = axios.isAxiosError(err)
-        ? err.response?.data?.message || err.message
-        : err instanceof Error
-          ? err.message
-          : "Market review failed.";
-
-      updateMarketRequestEntry(requestId, {
-        status: "rejected",
-        resolutionMessage: message,
-      });
-    }
-  };
-
   const handleGenerateAndDeploy = async () => {
     if (!prompt.trim() || !BACKEND_URL || !BACKEND_WALLET || !OPENBET_ADDRESS || !USDC_ADDRESS || !address) {
       setError("OpenBet env configuration is incomplete.");
@@ -163,13 +104,12 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
         ],
       });
 
-      const requestEntry = createMarketRequestEntry({
+      setPhase("Submitting request to agent...");
+      await createMarketRequestEntry({
         creator: address,
-        prompt,
-        reviewEndsAt: getReviewEndsAt(),
+        prompt: prompt.trim(),
+        txHash: paymentTxHash,
       });
-
-      void runReviewWorkflow(requestEntry.id, paymentTxHash, prompt);
 
       resetState();
       onClose();

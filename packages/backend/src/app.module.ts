@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { HeyElsaModule } from './heyelsa/heyelsa.module';
 import { MarketSyncModule } from './market-sync/market-sync.module';
 import { MarketsModule } from './markets/markets.module';
+import { FaucetModule } from './faucet/faucet.module';
 import { SupabaseModule } from './supabase/supabase.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { SupabaseModule } from './supabase/supabase.module';
     MarketSyncModule,
     MarketsModule,
     HeyElsaModule,
+    FaucetModule,
   ],
   controllers: [AppController],
   providers: [AppService],

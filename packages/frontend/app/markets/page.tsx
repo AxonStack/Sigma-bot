@@ -12,6 +12,7 @@ import {
   MARKET_REQUESTS_UPDATED_EVENT,
   type MarketRequestEntry,
 } from "@/lib/market-request-store";
+import { CreateMarketModal } from "@/components/create-market-modal";
 
 type Market = {
   createdAt: string;
@@ -98,7 +99,15 @@ function formatTimeLeft(
 const PAGE_SIZE = 12;
 
 function getRequestPresentation(entry: MarketRequestEntry, now: number): RequestPresentation {
-  if (now < entry.reviewEndsAt) {
+  if (entry.status === "pending") {
+    return {
+      badge: "Pending",
+      tone: "border-white/20 bg-white/5 text-white/50",
+      copy: "Your queston is in the queue for agent review.",
+    };
+  }
+
+  if (entry.status === "reviewing" || (now < entry.reviewEndsAt && entry.status !== "deployed" && entry.status !== "rejected")) {
     return {
       badge: "AI reviewing",
       tone: "border-amber-400/20 bg-amber-400/10 text-amber-200",
@@ -111,6 +120,14 @@ function getRequestPresentation(entry: MarketRequestEntry, now: number): Request
       badge: "Successfully deployed",
       tone: "border-emerald-400/20 bg-emerald-400/10 text-emerald-200",
       copy: "Your market passed review and was deployed.",
+    };
+  }
+
+  if (entry.status === "failed") {
+    return {
+      badge: "Internal Error",
+      tone: "border-red-500/30 bg-red-400/10 text-red-100",
+      copy: entry.resolutionMessage || "An internal error occurred during processing.",
     };
   }
 
@@ -149,6 +166,8 @@ function MarketsPageFallback() {
           <p className="text-sm font-semibold text-white">Loading markets...</p>
         </div>
       </div>
+
+      <CreateMarketModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
     </main>
   );
 }
@@ -163,6 +182,7 @@ function MarketsPageContent() {
   const [view, setView] = useState<"list" | "grid">("grid");
   const [page, setPage] = useState(1);
   const [now, setNow] = useState(0);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const scope = searchParams.get("scope");
   const isMyMarketsView = scope === "mine";
 
@@ -192,8 +212,9 @@ function MarketsPageContent() {
   useEffect(() => {
     if (!isMyMarketsView || !address) return;
 
-    const syncRequests = () => {
-      setRequestEntries(getMarketRequestsForCreator(address));
+    const syncRequests = async () => {
+      const requests = await getMarketRequestsForCreator(address);
+      setRequestEntries(requests);
       setNow(Date.now());
     };
 
@@ -204,12 +225,10 @@ function MarketsPageContent() {
     }, 15000);
 
     window.addEventListener(MARKET_REQUESTS_UPDATED_EVENT, syncRequests);
-    window.addEventListener("storage", syncRequests);
 
     return () => {
       window.clearInterval(intervalId);
       window.removeEventListener(MARKET_REQUESTS_UPDATED_EVENT, syncRequests);
-      window.removeEventListener("storage", syncRequests);
     };
   }, [address, isMyMarketsView]);
 
@@ -262,6 +281,14 @@ function MarketsPageContent() {
                     : "Connect your wallet to see the markets you created."
                   : "The market board now follows the landing-page shell: dark base, quieter cards, green for yes, red for no."}
               </p>
+              <div className="mt-5 flex items-center gap-3">
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="rounded-full bg-emerald-300 px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-[#041006] transition-all hover:scale-105 active:scale-95"
+                >
+                  Create Market
+                </button>
+              </div>
             </div>
 
             {!loading && !error && filteredMarkets.length > 0 && (
@@ -346,7 +373,7 @@ function MarketsPageContent() {
                 const presentation = getRequestPresentation(entry, now);
                 const reviewComplete = now >= entry.reviewEndsAt;
                 const showOpenMarket = reviewComplete && entry.status === "deployed" && !!entry.conditionId;
-                const showRejectedInfo = reviewComplete && entry.status === "rejected" && !!entry.resolutionMessage;
+                const showErrorInfo = reviewComplete && (entry.status === "rejected" || entry.status === "failed") && !!entry.resolutionMessage;
                 const openMarketHref =
                   showOpenMarket && entry.conditionId
                     ? `/market/${conditionIdFromAddress(entry.conditionId)}`
@@ -380,7 +407,7 @@ function MarketsPageContent() {
                           : presentation.copy}
                       </p>
 
-                      {showRejectedInfo ? (
+                      {showErrorInfo ? (
                         <div className="group relative mt-0.5 shrink-0">
                           <button
                             type="button"
@@ -396,7 +423,23 @@ function MarketsPageContent() {
                       ) : null}
                     </div>
 
-                    {!reviewComplete ? (
+                    {entry.queueInfo && (entry.status === "pending" || entry.status === "reviewing") ? (
+                      <div className="mt-4 flex flex-col gap-2">
+                        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-white/30">
+                          <span>Queue Position</span>
+                          <span className="text-white/60">{entry.queueInfo.current} / {entry.queueInfo.total}</span>
+                        </div>
+                        <div className="h-1 w-full overflow-hidden rounded-full bg-white/5">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(entry.queueInfo.current / entry.queueInfo.total) * 100}%` }}
+                            className="h-full bg-emerald-400/40"
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {!reviewComplete && entry.status !== "deployed" && entry.status !== "rejected" ? (
                       <p className="mt-3 text-xs text-white/40">
                         Estimated review complete by {new Date(entry.reviewEndsAt).toLocaleTimeString()}
                       </p>
@@ -688,6 +731,7 @@ function MarketsPageContent() {
           </>
         )}
       </div>
+      <CreateMarketModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
     </main>
   );
 }
