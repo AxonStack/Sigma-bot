@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount, useWriteContract } from "wagmi";
+import { useAccount, useWalletClient } from "wagmi";
 import { parseUnits } from "viem";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
+import { baseSepolia } from "wagmi/chains";
 import {
   createMarketRequestEntry,
 } from "@/lib/market-request-store";
@@ -45,16 +46,14 @@ const REVIEW_MINUTES_MAX = 10;
 
 export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const router = useRouter();
-  const { address } = useAccount();
+  const { address, chainId } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState("");
   const [generated, setGenerated] = useState<GeneratedMarket | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
-
-  const { writeContractAsync } = useWriteContract();
-
   const resetState = () => {
     setPrompt("");
     setLoading(false);
@@ -74,6 +73,16 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
       setError("OpenBet env configuration is incomplete.");
       return;
     }
+
+    if (chainId !== baseSepolia.id) {
+      setError("Switch your wallet to Base Sepolia before submitting.");
+      return;
+    }
+
+    if (!walletClient) {
+      setError("Wallet client unavailable. Reconnect your wallet and try again.");
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -83,7 +92,9 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
     try {
       // Step 1: User pays the fee first
       setPhase("Confirming fee payment in wallet...");
-      const paymentTxHash = await writeContractAsync({
+      const paymentTxHash = await walletClient.writeContract({
+        account: address,
+        chain: baseSepolia,
         address: USDC_ADDRESS,
         abi: [
           {
@@ -102,6 +113,7 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
           BACKEND_WALLET as `0x${string}`,
           parseUnits(GENERATION_FEE_USDC, 6), // USDC usually has 6 decimals
         ],
+        gas: BigInt(70_000),
       });
 
       setPhase("Submitting request to agent...");
@@ -115,11 +127,14 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
       onClose();
       router.push("/markets?scope=mine");
     } catch (err: unknown) {
-      const message = axios.isAxiosError(err)
+      const rawMessage = axios.isAxiosError(err)
         ? err.response?.data?.message || err.message
         : err instanceof Error
           ? err.message
           : "Process failed. Ensure you have USDC balance and approved the transaction.";
+      const message = rawMessage.includes("RPC endpoint returned too many errors")
+        ? "Base Sepolia RPC is overloaded right now. Retry in a moment or switch your wallet/provider to a dedicated Base Sepolia RPC."
+        : rawMessage;
       setError(message);
     } finally {
       setLoading(false);

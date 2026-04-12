@@ -1,5 +1,5 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { http } from "viem";
+import { fallback, http } from "viem";
 import { baseSepolia } from "wagmi/chains";
 
 const projectId =
@@ -15,12 +15,35 @@ if (
   );
 }
 
+function getRpcUrls() {
+  const configured = (process.env.NEXT_PUBLIC_RPC_URL ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return Array.from(
+    new Set([
+      ...configured,
+      "https://sepolia.base.org",
+      "https://sepolia-preconf.base.org",
+    ]),
+  );
+}
+
 export const config = getDefaultConfig({
   appName: "OpenBet",
   projectId,
   chains: [baseSepolia],
   ssr: true,
   transports: {
-    [baseSepolia.id]: http(process.env.NEXT_PUBLIC_RPC_URL ?? "https://sepolia.base.org"),
+    [baseSepolia.id]: fallback(
+      getRpcUrls().map((url) =>
+        http(url, {
+          retryCount: 2,
+          retryDelay: 250,
+          timeout: 8_000,
+        }),
+      ),
+    ),
   },
 });
