@@ -1,11 +1,20 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Contract, JsonRpcProvider, Wallet, parseEther, formatEther, parseUnits } from 'ethers';
+import {
+  Contract,
+  JsonRpcProvider,
+  Wallet,
+  parseEther,
+  formatEther,
+  parseUnits,
+} from 'ethers';
 import { PNP_FACTORY_ABI } from '../abi/pnp-factory.abi';
 import { SupabaseService } from '../supabase/supabase.service';
 import { ERC20_ABI } from '../abi/erc20.abi';
 import * as fs from 'fs';
 import * as path from 'path';
+
+const DEFAULT_USDC_ADDRESS = '0x7eaa021bf63f4cde1943431a69471f79ead7a8d5';
 
 @Injectable()
 export class MarketRelayerService {
@@ -24,7 +33,7 @@ export class MarketRelayerService {
    */
   public async getAtomicNonce(wallet: Wallet): Promise<number> {
     await this.nonceLock; // Wait for any existing tx to finish preparing
-    
+
     let resolveLock: () => void;
     this.nonceLock = new Promise((resolve) => {
       resolveLock = resolve;
@@ -46,15 +55,18 @@ export class MarketRelayerService {
   /**
    * Executes the on-chain market creation after verifying user payment.
    */
-  async executeMarketCreation(params: {
-    question: string;
-    description: string;
-    endTime: number;
-    initialLiquidity: string;
-    collateralToken: string;
-    creatorAddress?: string;
-    userPaymentTxHash?: string;
-  }, retryCount = 0): Promise<{ txHash: string; conditionId: string }> {
+  async executeMarketCreation(
+    params: {
+      question: string;
+      description: string;
+      endTime: number;
+      initialLiquidity: string;
+      collateralToken: string;
+      creatorAddress?: string;
+      userPaymentTxHash?: string;
+    },
+    retryCount = 0,
+  ): Promise<{ txHash: string; conditionId: string }> {
     const rpcUrl = this.config.get<string>('RPC_URL');
     const factoryAddress = this.config.get<string>('OPENBET_FACTORY_ADDRESS');
     const privateKey = this.config.get<string>('WALLET_PRIVATE_KEY');
@@ -65,20 +77,33 @@ export class MarketRelayerService {
 
     const provider = new JsonRpcProvider(rpcUrl);
     const relayerWallet = new Wallet(privateKey, provider);
-    const factory = new Contract(factoryAddress, PNP_FACTORY_ABI, relayerWallet);
+    const factory = new Contract(
+      factoryAddress,
+      PNP_FACTORY_ABI,
+      relayerWallet,
+    );
 
-    this.logger.log(`${retryCount > 0 ? 'Retrying (Nonce Fix): ' : ''}Executing market creation for: "${params.question}"`);
+    this.logger.log(
+      `${retryCount > 0 ? 'Retrying (Nonce Fix): ' : ''}Executing market creation for: "${params.question}"`,
+    );
 
     try {
       // 1. Prepare Token and Liquidity
-      const isNative = params.collateralToken === '0x0000000000000000000000000000000000000000';
+      const isNative =
+        params.collateralToken === '0x0000000000000000000000000000000000000000';
       if (isNative) {
-        throw new BadRequestException('Factory is non-payable. Please provide a valid ERC20 collateral token address.');
+        throw new BadRequestException(
+          'Factory is non-payable. Please provide a valid ERC20 collateral token address.',
+        );
       }
 
-      const token = new Contract(params.collateralToken, ERC20_ABI, relayerWallet);
+      const token = new Contract(
+        params.collateralToken,
+        ERC20_ABI,
+        relayerWallet,
+      );
       const decimals = await token.decimals();
-      
+
       // Use parseUnits for safe decimal scaling (no mixing of BigInt and Number)
       const adjustedLiquidity = parseUnits('100', decimals);
 
@@ -86,14 +111,24 @@ export class MarketRelayerService {
       const balance = await token.balanceOf(relayerWallet.address);
       if (balance < adjustedLiquidity) {
         const symbol = await token.symbol();
-        throw new BadRequestException(`Relayer token balance too low. Has ${formatEther(balance)} ${symbol}, needs 100 ${symbol}`);
+        throw new BadRequestException(
+          `Relayer token balance too low. Has ${formatEther(balance)} ${symbol}, needs 100 ${symbol}`,
+        );
       }
 
       // 3. Check and Handle Allowance
-      const allowance = await token.allowance(relayerWallet.address, factoryAddress);
+      const allowance = await token.allowance(
+        relayerWallet.address,
+        factoryAddress,
+      );
       if (allowance < adjustedLiquidity) {
-        this.logger.log(`Insufficient allowance. Approving factory for ${params.collateralToken}...`);
-        const approveTx = await token.approve(factoryAddress, adjustedLiquidity * 10n); // Approve 10x for future use
+        this.logger.log(
+          `Insufficient allowance. Approving factory for ${params.collateralToken}...`,
+        );
+        const approveTx = await token.approve(
+          factoryAddress,
+          adjustedLiquidity * 10n,
+        ); // Approve 10x for future use
         await approveTx.wait();
         this.logger.log(`Approval confirmed: ${approveTx.hash}`);
       }
@@ -107,19 +142,29 @@ export class MarketRelayerService {
         params.collateralToken,
         params.question,
         BigInt(params.endTime),
-        { nonce }
+        { nonce },
       );
 
       this.logger.log(`Creation transaction sent: ${tx.hash}`);
       const receipt = await tx.wait();
 
       // 5. Extract conditionId from events
-      const event = receipt.logs.map((log: any) => {
-        try { return factory.interface.parseLog(log); } catch (e) { return null; }
-      }).find((ev: any) => ev?.name === 'OPENBET_MarketCreated');
+      const event = receipt.logs
+        .map((log: any) => {
+          try {
+            return factory.interface.parseLog(log);
+          } catch (e) {
+            return null;
+          }
+        })
+        .find((ev: any) => ev?.name === 'OPENBET_MarketCreated');
 
       const conditionId = event?.args?.conditionId || '0x...';
-      const creatorAddress = await this.resolveCreatorAddress(provider, params, relayerWallet.address);
+      const creatorAddress = await this.resolveCreatorAddress(
+        provider,
+        params,
+        relayerWallet.address,
+      );
 
       // 6. Save Metadata (Supabase + JSON)
       await this.saveMarketMetadata({
@@ -137,8 +182,14 @@ export class MarketRelayerService {
       };
     } catch (error: any) {
       // Automatic Nonce Recovery
-      if ((error.message?.includes('nonce too low') || error.code === 'NONCE_EXPIRED') && retryCount < 2) {
-        this.logger.warn(`NONCE_EXPIRED detected for nonce ${this.nextNonce}. Re-syncing with chain...`);
+      if (
+        (error.message?.includes('nonce too low') ||
+          error.code === 'NONCE_EXPIRED') &&
+        retryCount < 2
+      ) {
+        this.logger.warn(
+          `NONCE_EXPIRED detected for nonce ${this.nextNonce}. Re-syncing with chain...`,
+        );
         this.nextNonce = null; // Force re-fetch from chain next time
         return this.executeMarketCreation(params, retryCount + 1);
       }
@@ -161,12 +212,16 @@ export class MarketRelayerService {
   ): Promise<string> {
     if (params.userPaymentTxHash) {
       try {
-        const paymentTx = await provider.getTransaction(params.userPaymentTxHash);
+        const paymentTx = await provider.getTransaction(
+          params.userPaymentTxHash,
+        );
         if (paymentTx?.from) {
           return paymentTx.from.toLowerCase();
         }
       } catch (e) {
-        this.logger.warn(`Failed to resolve creator from payment tx ${params.userPaymentTxHash}`);
+        this.logger.warn(
+          `Failed to resolve creator from payment tx ${params.userPaymentTxHash}`,
+        );
       }
     }
 
@@ -207,7 +262,7 @@ export class MarketRelayerService {
         .getClawdbetClient()
         .from(this.supabase.writeTable)
         .insert([marketRow]);
-      
+
       if (error) {
         this.logger.warn(`Failed to save to Supabase: ${error.message}`);
       } else {
@@ -228,7 +283,11 @@ export class MarketRelayerService {
           markets = [];
         }
       }
-      markets.push({ ...marketRow, description: data.description, collateralToken: data.collateralToken });
+      markets.push({
+        ...marketRow,
+        description: data.description,
+        collateralToken: data.collateralToken,
+      });
       fs.writeFileSync(this.jsonFilePath, JSON.stringify(markets, null, 2));
       this.logger.log(`Market ${data.conditionId} saved to local JSON`);
     } catch (e) {
@@ -251,7 +310,10 @@ export class MarketRelayerService {
   async refundUSDC(to: string): Promise<string> {
     const rpcUrl = this.config.get<string>('RPC_URL');
     const privateKey = this.config.get<string>('WALLET_PRIVATE_KEY');
-    const usdcAddress = this.config.get<string>('USDC_ADDRESS');
+    const usdcAddress =
+      this.config.get<string>('USDC_ADDRESS')?.trim() ||
+      this.config.get<string>('NEXT_PUBLIC_USDC_ADDRESS')?.trim() ||
+      DEFAULT_USDC_ADDRESS;
 
     if (!rpcUrl || !privateKey || !usdcAddress) {
       throw new Error('Refund configuration is incomplete');
@@ -260,19 +322,19 @@ export class MarketRelayerService {
     const provider = new JsonRpcProvider(rpcUrl);
     const relayerWallet = new Wallet(privateKey, provider);
     const token = new Contract(usdcAddress, ERC20_ABI, relayerWallet);
-    
+
     const decimals = await token.decimals();
     const amountToRefund = parseUnits('2', decimals);
 
     this.logger.log(`Refunding 2 USDC to ${to}...`);
-    
+
     const nonce = await this.getAtomicNonce(relayerWallet);
     const tx = await token.transfer(to, amountToRefund, { nonce });
-    
+
     this.logger.log(`Refund transaction sent: ${tx.hash}`);
     await tx.wait();
     this.logger.log(`Refund confirmed: ${tx.hash}`);
-    
+
     return tx.hash;
   }
 }

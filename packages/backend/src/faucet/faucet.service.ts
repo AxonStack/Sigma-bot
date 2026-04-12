@@ -1,9 +1,24 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SupabaseService } from '../supabase/supabase.service';
 import { MarketRelayerService } from '../markets/market-relayer.service';
-import { Contract, JsonRpcProvider, Wallet, parseUnits, formatUnits } from 'ethers';
+import {
+  Contract,
+  JsonRpcProvider,
+  Wallet,
+  parseUnits,
+  formatUnits,
+  isAddress,
+} from 'ethers';
 import { ERC20_ABI } from '../abi/erc20.abi';
+
+const DEFAULT_USDC_ADDRESS = '0x7eaa021bf63f4cde1943431a69471f79ead7a8d5';
+const DEFAULT_SIGMA_ADDRESS = '0xCf9f6587E51D8650D04fAc0f580cD539450090A1';
 
 @Injectable()
 export class FaucetService {
@@ -15,6 +30,57 @@ export class FaucetService {
     private readonly config: ConfigService,
     private readonly relayer: MarketRelayerService,
   ) {}
+
+  private getConfigValue(
+    keys: string[],
+    label: string,
+    fallback?: string,
+  ): string {
+    for (const key of keys) {
+      const value = this.config.get<string>(key)?.trim();
+      if (value) {
+        return value;
+      }
+    }
+
+    if (fallback?.trim()) {
+      return fallback.trim();
+    }
+
+    throw new ServiceUnavailableException(`${label} configuration is missing.`);
+  }
+
+  private getConfiguredTokenAddresses() {
+    const usdcAddress = this.getConfigValue(
+      ['USDC_ADDRESS', 'NEXT_PUBLIC_USDC_ADDRESS'],
+      'USDC address',
+      DEFAULT_USDC_ADDRESS,
+    );
+    const sigmaAddress = this.getConfigValue(
+      [
+        'SIGMA_TOKEN_ADDRESS',
+        'OPENBET_TOKEN_ADDRESS',
+        'NEXT_PUBLIC_SIGMA_ADDRESS',
+        'NEXT_PUBLIC_OPENBET_TOKEN_ADDRESS',
+      ],
+      'SIGMA/OpenBet token address',
+      DEFAULT_SIGMA_ADDRESS,
+    );
+
+    if (!isAddress(usdcAddress)) {
+      throw new ServiceUnavailableException(
+        'USDC address configuration is invalid.',
+      );
+    }
+
+    if (!isAddress(sigmaAddress)) {
+      throw new ServiceUnavailableException(
+        'SIGMA/OpenBet token address configuration is invalid.',
+      );
+    }
+
+    return { usdcAddress, sigmaAddress };
+  }
 
   /**
    * Checks the status of a user's claim cooldown.
@@ -57,19 +123,27 @@ export class FaucetService {
    * Claims 10 WSUSDC and 100 SIGMA for the user.
    */
   async claim(address: string) {
-    if (!address || address === '0x0000000000000000000000000000000000000000') {
+    if (
+      !address ||
+      !isAddress(address) ||
+      address === '0x0000000000000000000000000000000000000000'
+    ) {
       throw new BadRequestException('Invalid address.');
     }
 
     const status = await this.getStatus(address);
     if (!status.canClaim) {
-      throw new BadRequestException(`Wait for countdown. Remaining: ${Math.ceil(status.remaining / 1000 / 60)} minutes.`);
+      throw new BadRequestException(
+        `Wait for countdown. Remaining: ${Math.ceil(status.remaining / 1000 / 60)} minutes.`,
+      );
     }
 
-    const rpcUrl = this.config.getOrThrow<string>('RPC_URL');
-    const privateKey = this.config.getOrThrow<string>('WALLET_PRIVATE_KEY');
-    const usdcAddress = this.config.getOrThrow<string>('USDC_ADDRESS');
-    const sigmaAddress = this.config.getOrThrow<string>('SIGMA_TOKEN_ADDRESS');
+    const rpcUrl = this.getConfigValue(['RPC_URL'], 'RPC URL');
+    const privateKey = this.getConfigValue(
+      ['WALLET_PRIVATE_KEY'],
+      'Relayer private key',
+    );
+    const { usdcAddress, sigmaAddress } = this.getConfiguredTokenAddresses();
 
     const provider = new JsonRpcProvider(rpcUrl);
     const relayerWallet = new Wallet(privateKey, provider);
@@ -85,10 +159,14 @@ export class FaucetService {
     const relayerSigma = await sigmaToken.balanceOf(relayerWallet.address);
 
     if (relayerUsdc < wsusdcAmount) {
-      throw new BadRequestException(`Relayer lacks WSUSDC. Found ${formatUnits(relayerUsdc, 6)}`);
+      throw new BadRequestException(
+        `Relayer lacks WSUSDC. Found ${formatUnits(relayerUsdc, 6)}`,
+      );
     }
     if (relayerSigma < sigmaAmount) {
-      throw new BadRequestException(`Relayer lacks SIGMA. Found ${formatUnits(relayerSigma, 18)}`);
+      throw new BadRequestException(
+        `Relayer lacks SIGMA. Found ${formatUnits(relayerSigma, 18)}`,
+      );
     }
 
     this.logger.log(`Faucet claim attempt for ${address}`);
@@ -96,14 +174,22 @@ export class FaucetService {
     try {
       // 1. Send WSUSDC
       const nonce1 = await this.relayer.getAtomicNonce(relayerWallet);
-      const txUsdc = await usdcToken.transfer(address, wsusdcAmount, { nonce: nonce1 });
-      this.logger.log(`WSUSDC sent: ${txUsdc.hash}. Waiting for confirmation...`);
+      const txUsdc = await usdcToken.transfer(address, wsusdcAmount, {
+        nonce: nonce1,
+      });
+      this.logger.log(
+        `WSUSDC sent: ${txUsdc.hash}. Waiting for confirmation...`,
+      );
       await txUsdc.wait();
 
       // 2. Send SIGMA
       const nonce2 = await this.relayer.getAtomicNonce(relayerWallet);
-      const txSigma = await sigmaToken.transfer(address, sigmaAmount, { nonce: nonce2 });
-      this.logger.log(`SIGMA sent: ${txSigma.hash}. Waiting for confirmation...`);
+      const txSigma = await sigmaToken.transfer(address, sigmaAmount, {
+        nonce: nonce2,
+      });
+      this.logger.log(
+        `SIGMA sent: ${txSigma.hash}. Waiting for confirmation...`,
+      );
       await txSigma.wait();
 
       // 3. Record claim in DB
@@ -161,10 +247,12 @@ export class FaucetService {
    * Gets relayer balances for debugging.
    */
   async getRelayerBalances() {
-    const rpcUrl = this.config.getOrThrow<string>('RPC_URL');
-    const privateKey = this.config.getOrThrow<string>('WALLET_PRIVATE_KEY');
-    const usdcAddress = this.config.getOrThrow<string>('USDC_ADDRESS');
-    const sigmaAddress = this.config.getOrThrow<string>('SIGMA_TOKEN_ADDRESS');
+    const rpcUrl = this.getConfigValue(['RPC_URL'], 'RPC URL');
+    const privateKey = this.getConfigValue(
+      ['WALLET_PRIVATE_KEY'],
+      'Relayer private key',
+    );
+    const { usdcAddress, sigmaAddress } = this.getConfiguredTokenAddresses();
 
     const provider = new JsonRpcProvider(rpcUrl);
     const relayerWallet = new Wallet(privateKey, provider);
