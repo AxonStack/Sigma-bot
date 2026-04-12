@@ -166,8 +166,6 @@ function MarketsPageFallback() {
           <p className="text-sm font-semibold text-white">Loading markets...</p>
         </div>
       </div>
-
-      <CreateMarketModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
     </main>
   );
 }
