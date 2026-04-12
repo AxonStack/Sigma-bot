@@ -51,7 +51,7 @@ export async function createMarketRequestEntry(input: {
   txHash: string;
 }): Promise<MarketRequestEntry> {
   try {
-    const response = await axios.post(`${BACKEND_URL}/markets/request`, {
+    const response = await axios.post(`${BACKEND_URL}markets/request`, {
       prompt: input.prompt,
       creator: input.creator,
       txHash: input.txHash,
