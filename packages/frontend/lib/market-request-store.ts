@@ -37,7 +37,7 @@ function dispatchUpdate() {
 export async function getMarketRequestsForCreator(address: string | undefined): Promise<MarketRequestEntry[]> {
   if (!address) return [];
   try {
-    const response = await axios.get(`${BACKEND_URL}/markets/requests/${address}`);
+    const response = await axios.get(`${BACKEND_URL}markets/requests/${address}`);
     return response.data;
   } catch (error) {
     console.error("Failed to fetch market requests:", error);
