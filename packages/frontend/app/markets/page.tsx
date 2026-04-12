@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -122,6 +122,38 @@ function getRequestPresentation(entry: MarketRequestEntry, now: number): Request
 }
 
 export default function MarketsPage() {
+  return (
+    <Suspense fallback={<MarketsPageFallback />}>
+      <MarketsPageContent />
+    </Suspense>
+  );
+}
+
+function MarketsPageFallback() {
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-[#040704] text-white">
+      <div className="absolute inset-0 bg-grid opacity-[0.05]" />
+      <div
+        className="pointer-events-none absolute right-0 top-0 h-[500px] w-[500px] rounded-full opacity-25 blur-3xl blob-slow"
+        style={{ background: "rgba(15, 230, 78, 0.14)" }}
+      />
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 h-[420px] w-[420px] rounded-full opacity-20 blur-3xl blob-slow"
+        style={{ background: "rgba(74, 222, 128, 0.12)" }}
+      />
+
+      <Navbar />
+
+      <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6 md:pt-28">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur-xl">
+          <p className="text-sm font-semibold text-white">Loading markets...</p>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function MarketsPageContent() {
   const searchParams = useSearchParams();
   const { address } = useAccount();
   const [markets, setMarkets] = useState<Market[]>([]);
@@ -315,6 +347,10 @@ export default function MarketsPage() {
                 const reviewComplete = now >= entry.reviewEndsAt;
                 const showOpenMarket = reviewComplete && entry.status === "deployed" && !!entry.conditionId;
                 const showRejectedInfo = reviewComplete && entry.status === "rejected" && !!entry.resolutionMessage;
+                const openMarketHref =
+                  showOpenMarket && entry.conditionId
+                    ? `/market/${conditionIdFromAddress(entry.conditionId)}`
+                    : null;
 
                 return (
                   <div
@@ -366,10 +402,10 @@ export default function MarketsPage() {
                       </p>
                     ) : null}
 
-                    {showOpenMarket ? (
+                    {openMarketHref ? (
                       <div className="mt-4">
                         <Link
-                          href={`/market/${conditionIdFromAddress(entry.conditionId)}`}
+                          href={openMarketHref}
                           className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300 transition-colors duration-200 hover:text-emerald-200"
                         >
                           Open market
