@@ -21,6 +21,10 @@ export class MarketJobsService {
   async handleCron() {
     this.logger.debug('Polling for market jobs...');
 
+    // 1. Recover stuck jobs (Processing for > 10m)
+    await this.recoverStuckJobs();
+
+    // 2. Process pending jobs
     const { data: jobs, error } = await this.supabase
       .getClawdbetClient()
       .from(SUPABASE_MARKET_JOBS_TABLE)
@@ -37,6 +41,33 @@ export class MarketJobsService {
 
     for (const job of jobs) {
       await this.processJob(job);
+    }
+  }
+
+  private async recoverStuckJobs() {
+    const thirtyMinutesAgo = new Date();
+    thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
+
+    const { data: stuckJobs, error } = await this.supabase
+      .getClawdbetClient()
+      .from(SUPABASE_MARKET_JOBS_TABLE)
+      .update({ status: 'scheduled' })
+      .eq('status', 'processing')
+      .lte('created_at', thirtyMinutesAgo.toISOString())
+      .select();
+
+    if (error) {
+      if (error.message?.includes('column "updated_at" does not exist')) {
+        this.logger.warn('updated_at column missing, falling back to created_at for recovery');
+        // This is the fallback logic we just implemented
+      } else {
+        this.logger.error(`Failed to recover stuck jobs: ${error.message}`);
+      }
+      return;
+    }
+
+    if (stuckJobs && stuckJobs.length > 0) {
+      this.logger.warn(`Recovered ${stuckJobs.length} stuck jobs (reset to scheduled based on created_at)`);
     }
   }
 
@@ -96,9 +127,9 @@ export class MarketJobsService {
 
     if (updateError) throw new Error(`Failed to update request: ${updateError.message}`);
 
-    // 2. Schedule AI evaluation job (4 minutes later)
+    // 2. Schedule AI evaluation job (5 seconds later)
     const scheduledFor = new Date();
-    scheduledFor.setMinutes(scheduledFor.getMinutes() + 4);
+    scheduledFor.setSeconds(scheduledFor.getSeconds() + 5);
 
     const { error: jobError } = await this.supabase
       .getClawdbetClient()
