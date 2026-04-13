@@ -35,13 +35,13 @@ export function Navbar() {
     <>
       <nav className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-6 sm:pt-4">
         <div
-          className={`mx-auto max-w-7xl rounded-[26px] border px-4 py-3 transition-[background-color,border-color,transform] duration-200 sm:rounded-[30px] sm:px-5 ${
+          className={`mx-auto max-w-[96rem] rounded-[26px] border px-4 py-3 transition-[background-color,border-color,transform] duration-200 sm:rounded-[30px] sm:px-5 ${
             scrolled
               ? "border-white/12 bg-black/70 backdrop-blur-xl"
               : "border-white/10 bg-black/40 backdrop-blur-lg"
           }`}
         >
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 md:grid-cols-[auto_1fr_auto] md:gap-4">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 md:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-5">
             <Link href="/" className="flex min-w-0 items-center gap-3">
               <div className="relative">
                 <div className="absolute inset-0 rounded-2xl bg-[#1dff63]/25 blur-xl" />
@@ -68,10 +68,10 @@ export function Navbar() {
               </div>
             </Link>
 
-            <div className="hidden items-center justify-center gap-8 md:flex">
+            <div className="hidden min-w-0 items-center justify-center gap-5 lg:gap-7 md:flex">
               {navLinks.map((link) => {
                 const content = (
-                  <span className="text-[13px] uppercase tracking-[0.24em] text-white/62 transition-colors duration-200 hover:text-white">
+                  <span className="whitespace-nowrap text-[13px] uppercase tracking-[0.24em] text-white/62 transition-colors duration-200 hover:text-white">
                     {link.label}
                   </span>
                 );
@@ -88,7 +88,7 @@ export function Navbar() {
               })}
             </div>
 
-            <div className="hidden md:flex md:justify-end">
+            <div className="hidden md:flex md:justify-end md:min-w-0">
               <WalletPill />
             </div>
 

@@ -7,6 +7,7 @@ import { HeyElsaModule } from './heyelsa/heyelsa.module';
 import { MarketSyncModule } from './market-sync/market-sync.module';
 import { MarketsModule } from './markets/markets.module';
 import { FaucetModule } from './faucet/faucet.module';
+import { ProfilesModule } from './profiles/profiles.module';
 import { SupabaseModule } from './supabase/supabase.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { SupabaseModule } from './supabase/supabase.module';
     SupabaseModule,
     MarketSyncModule,
     MarketsModule,
+    ProfilesModule,
     HeyElsaModule,
     FaucetModule,
   ],

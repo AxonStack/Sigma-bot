@@ -98,7 +98,6 @@ export default function MarketPage() {
 
   const [copiedId, setCopiedId] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [copiedAgent, setCopiedAgent] = useState(false);
 
   const [market, setMarket] = useState<MarketDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -228,16 +227,6 @@ export default function MarketPage() {
     setTimeout(() => setCopiedLink(false), 2000);
   }
 
-  // ── Copy helpers (agent) ──────────────────────────────────────────────────
-
-  function copyForAgent() {
-    navigator.clipboard.writeText(
-      `Review the OpenBet trading instructions for this market and use conditionId ${conditionId}.`
-    );
-    setCopiedAgent(true);
-    setTimeout(() => setCopiedAgent(false), 1500);
-  }
-
   // ── Success layout ─────────────────────────────────────────────────────────
 
   const truncatedContract = FACTORY_ADDRESS
@@ -278,31 +267,6 @@ export default function MarketPage() {
               <h1 className="font-body text-xl md:text-2xl lg:text-2xl font-semibold text-white/90 leading-snug mb-5">
                 {question ?? "—"}
               </h1>
-
-              {/* Send To Agent pill */}
-              <div className="flex justify-end -mt-2">
-                <button
-                  onClick={copyForAgent}
-                  className="inline-flex h-7 items-center gap-1.5 rounded-full bg-white/8 px-3 text-[11px] font-medium text-white/72 transition-all duration-150 hover:bg-white/12 hover:text-white cursor-pointer"
-                >
-                  {copiedAgent ? (
-                    <>
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                        <path d="M3 8.5L6.5 12L13 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      Send To Agent
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="shrink-0">
-                        <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
-                        <path d="M3 11V3.5A.5.5 0 013.5 3H11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                      </svg>
-                    </>
-                  )}
-                </button>
-              </div>
             </div>
           </motion.div>
 

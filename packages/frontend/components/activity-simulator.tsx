@@ -24,7 +24,7 @@ function generateFakeUser() {
 
 function generateFakeTrade(): FakeTrade {
   const isYes = Math.random() > 0.4;
-  const amount = (Math.random() * 5000 + 500).toFixed(0);
+  const amount = (Math.random() * 150 + 50).toFixed(0);
   
   return {
     id: Math.random().toString(36).substr(2, 9),

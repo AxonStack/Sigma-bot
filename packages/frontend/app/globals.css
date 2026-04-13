@@ -293,7 +293,8 @@ body {
 .wallet-primary-pill,
 .wallet-warning-pill,
 .wallet-network-pill,
-.wallet-account-pill {
+.wallet-account-pill,
+.wallet-icon-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
@@ -309,7 +310,8 @@ body {
 .wallet-primary-pill:active,
 .wallet-warning-pill:active,
 .wallet-network-pill:active,
-.wallet-account-pill:active {
+.wallet-account-pill:active,
+.wallet-icon-pill:active {
   transform: scale(0.97);
 }
 
@@ -326,16 +328,24 @@ body {
 }
 
 .wallet-network-pill,
-.wallet-account-pill {
+.wallet-account-pill,
+.wallet-icon-pill {
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 241, 245, 0.88);
 }
 
 .wallet-network-pill:hover,
-.wallet-account-pill:hover {
+.wallet-account-pill:hover,
+.wallet-icon-pill:hover {
   border-color: rgba(83, 255, 132, 0.45);
   background: rgba(255, 255, 255, 0.08);
+}
+
+.wallet-icon-pill {
+  justify-content: center;
+  min-width: 44px;
+  padding-inline: 0.85rem;
 }
 
 .wallet-status-dot,
@@ -362,6 +372,17 @@ body {
   font-size: 0.9rem;
   font-weight: 600;
   color: rgba(255, 241, 245, 0.92);
+}
+
+.wallet-account-subtext {
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 0.18rem;
+  font-size: 0.68rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.38);
 }
 
 @media (hover: hover) and (pointer: fine) {
