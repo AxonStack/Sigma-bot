@@ -15,7 +15,7 @@ const NAME_PATTERN = /^[A-Za-z0-9 _-]+$/;
 
 @Injectable()
 export class ProfilesService {
-  private readonly jsonFilePath = path.join(process.cwd(), 'profiles.json');
+  private readonly jsonFilePath = path.join(this.resolveBackendRoot(), 'profiles.json');
 
   getAllProfiles(): UserProfile[] {
     return this.readProfiles().sort((a, b) => {
@@ -77,9 +77,35 @@ export class ProfilesService {
   }
 
   private ensureFile() {
+    fs.mkdirSync(path.dirname(this.jsonFilePath), { recursive: true });
     if (!fs.existsSync(this.jsonFilePath)) {
       fs.writeFileSync(this.jsonFilePath, '[]\n', 'utf8');
     }
+  }
+
+  private resolveBackendRoot(): string {
+    const candidates = [
+      path.resolve(process.cwd(), 'packages/backend'),
+      path.resolve(process.cwd()),
+      path.resolve(__dirname, '../..'),
+      path.resolve(__dirname, '../../..'),
+    ];
+
+    for (const candidate of candidates) {
+      const packageJsonPath = path.join(candidate, 'package.json');
+      if (!fs.existsSync(packageJsonPath)) continue;
+
+      try {
+        const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as { name?: string };
+        if (pkg.name === '@openbet/backend') {
+          return candidate;
+        }
+      } catch {
+        continue;
+      }
+    }
+
+    return path.resolve(process.cwd(), 'packages/backend');
   }
 
   private readProfiles(): UserProfile[] {
