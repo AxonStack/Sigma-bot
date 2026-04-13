@@ -1,5 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 export type UserProfile = {
@@ -15,7 +16,10 @@ const NAME_PATTERN = /^[A-Za-z0-9 _-]+$/;
 
 @Injectable()
 export class ProfilesService {
-  private readonly jsonFilePath = path.join(this.resolveBackendRoot(), 'profiles.json');
+  private readonly logger = new Logger(ProfilesService.name);
+  private readonly backendRoot = this.resolveBackendRoot();
+  private readonly sourceFilePath = path.join(this.backendRoot, 'profiles.json');
+  private readonly jsonFilePath = this.resolveWritableFilePath();
 
   getAllProfiles(): UserProfile[] {
     return this.readProfiles().sort((a, b) => {
@@ -79,8 +83,21 @@ export class ProfilesService {
   private ensureFile() {
     fs.mkdirSync(path.dirname(this.jsonFilePath), { recursive: true });
     if (!fs.existsSync(this.jsonFilePath)) {
-      fs.writeFileSync(this.jsonFilePath, '[]\n', 'utf8');
+      const seedContent = this.readSeedContent();
+      fs.writeFileSync(this.jsonFilePath, seedContent, 'utf8');
     }
+  }
+
+  private readSeedContent(): string {
+    if (fs.existsSync(this.sourceFilePath)) {
+      try {
+        return fs.readFileSync(this.sourceFilePath, 'utf8');
+      } catch {
+        return '[]\n';
+      }
+    }
+
+    return '[]\n';
   }
 
   private resolveBackendRoot(): string {
@@ -123,5 +140,32 @@ export class ProfilesService {
   private writeProfiles(profiles: UserProfile[]) {
     this.ensureFile();
     fs.writeFileSync(this.jsonFilePath, `${JSON.stringify(profiles, null, 2)}\n`, 'utf8');
+  }
+
+  private resolveWritableFilePath(): string {
+    const configuredPath = (process.env.PROFILES_JSON_PATH ?? '').trim();
+    if (configuredPath) {
+      return path.resolve(configuredPath);
+    }
+
+    if (this.canWriteTo(path.dirname(this.sourceFilePath))) {
+      return this.sourceFilePath;
+    }
+
+    const fallbackPath = path.join(os.tmpdir(), 'openbet-profiles.json');
+    this.logger.warn(
+      `Profiles storage is read-only at ${this.sourceFilePath}. Falling back to ${fallbackPath}.`,
+    );
+    return fallbackPath;
+  }
+
+  private canWriteTo(dirPath: string): boolean {
+    try {
+      fs.mkdirSync(dirPath, { recursive: true });
+      fs.accessSync(dirPath, fs.constants.W_OK);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
