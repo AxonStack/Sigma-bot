@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { motion } from "framer-motion";
+import { useAccount } from "wagmi";
 import { CreateMarketModal } from "./create-market-modal";
 import { FaucetModal } from "./faucet-modal";
 
@@ -13,8 +15,28 @@ const heroStats = [
 ];
 
 export function Hero() {
+  const { isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [faucetOpen, setFaucetOpen] = useState(false);
+
+  const handleOpenCreateMarket = () => {
+    if (!isConnected) {
+      openConnectModal?.();
+      return;
+    }
+
+    setCreateModalOpen(true);
+  };
+
+  const handleOpenFaucet = () => {
+    if (!isConnected) {
+      openConnectModal?.();
+      return;
+    }
+
+    setFaucetOpen(true);
+  };
 
   return (
     <>
@@ -62,7 +84,7 @@ export function Hero() {
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:mt-10 sm:gap-4 sm:flex-row">
               <button
                 type="button"
-                onClick={() => setCreateModalOpen(true)}
+                onClick={handleOpenCreateMarket}
                 className="button-primary w-full rounded-full px-7 py-4 text-sm font-semibold uppercase tracking-[0.18em] sm:w-auto sm:tracking-[0.2em]"
               >
                 Launch a market
@@ -75,7 +97,7 @@ export function Hero() {
               </Link>
               <button
                 type="button"
-                onClick={() => setFaucetOpen(true)}
+                onClick={handleOpenFaucet}
                 className="button-secondary w-full rounded-full px-7 py-4 text-sm font-semibold uppercase tracking-[0.18em] sm:w-auto sm:tracking-[0.2em]"
               >
                 Faucet
