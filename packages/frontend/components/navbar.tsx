@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { useAccount } from "wagmi";
+import { FaucetModal } from "./faucet-modal";
 import { WalletPill } from "./wallet-pill";
 
 const navLinks = [
@@ -15,8 +18,11 @@ const navLinks = [
 ];
 
 export function Navbar() {
+  const { isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [faucetOpen, setFaucetOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 12);
@@ -30,6 +36,15 @@ export function Navbar() {
       document.body.style.overflow = "";
     };
   }, [mobileOpen]);
+
+  const handleOpenFaucet = () => {
+    if (!isConnected) {
+      openConnectModal?.();
+      return;
+    }
+
+    setFaucetOpen(true);
+  };
 
   return (
     <>
@@ -89,7 +104,16 @@ export function Navbar() {
             </div>
 
             <div className="hidden md:flex md:justify-end md:min-w-0">
-              <WalletPill />
+              <div className="flex min-w-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleOpenFaucet}
+                  className="inline-flex h-11 items-center justify-center rounded-full border border-white/12 bg-white/[0.05] px-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/74 transition-colors duration-200 hover:border-emerald-300/40 hover:bg-white/[0.08] hover:text-white"
+                >
+                  Faucet
+                </button>
+                <WalletPill />
+              </div>
             </div>
 
             <button
@@ -153,6 +177,20 @@ export function Navbar() {
                     </a>
                   );
                 })}
+
+                <motion.button
+                  type="button"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.32, duration: 0.2 }}
+                  onClick={() => {
+                    setMobileOpen(false);
+                    handleOpenFaucet();
+                  }}
+                  className="flex h-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-5 text-sm font-semibold uppercase tracking-[0.2em] text-white/80 transition-colors duration-200 hover:border-emerald-300/35 hover:text-white"
+                >
+                  Faucet
+                </motion.button>
               </div>
 
               <motion.div
@@ -167,6 +205,8 @@ export function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <FaucetModal isOpen={faucetOpen} onClose={() => setFaucetOpen(false)} />
     </>
   );
 }

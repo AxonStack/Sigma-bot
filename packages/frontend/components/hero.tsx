@@ -6,7 +6,6 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { motion } from "framer-motion";
 import { useAccount } from "wagmi";
 import { CreateMarketModal } from "./create-market-modal";
-import { FaucetModal } from "./faucet-modal";
 
 const heroStats = [
   { label: "Launch time", value: "< 60 sec" },
@@ -18,7 +17,6 @@ export function Hero() {
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [faucetOpen, setFaucetOpen] = useState(false);
 
   const handleOpenCreateMarket = () => {
     if (!isConnected) {
@@ -27,15 +25,6 @@ export function Hero() {
     }
 
     setCreateModalOpen(true);
-  };
-
-  const handleOpenFaucet = () => {
-    if (!isConnected) {
-      openConnectModal?.();
-      return;
-    }
-
-    setFaucetOpen(true);
   };
 
   return (
@@ -95,13 +84,6 @@ export function Hero() {
               >
                 Explore markets
               </Link>
-              <button
-                type="button"
-                onClick={handleOpenFaucet}
-                className="button-secondary w-full rounded-full px-7 py-4 text-sm font-semibold uppercase tracking-[0.18em] sm:w-auto sm:tracking-[0.2em]"
-              >
-                Faucet
-              </button>
             </div>
           </motion.div>
 
@@ -153,7 +135,6 @@ export function Hero() {
       </section>
 
       <CreateMarketModal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} />
-      <FaucetModal isOpen={faucetOpen} onClose={() => setFaucetOpen(false)} />
     </>
   );
 }
