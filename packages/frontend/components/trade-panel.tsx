@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { ERC20_ABI, FACTORY_ABI } from "@/lib/abi/abi";
 import { WalletPill } from "./wallet-pill";
+import { simplifyError } from "@/lib/errors";
 
 // ── Parsed ABIs ──────────────────────────────────────────────────────────────
 
@@ -233,9 +234,8 @@ export function TradePanel({
       },
       { 
         onSuccess: () => undefined,
-        onError: (err: Error & { shortMessage?: string }) => {
-          const msg = err.shortMessage || err.message;
-          setTxError(msg);
+        onError: (err) => {
+          setTxError(simplifyError(err));
         } 
       },
     );
@@ -261,7 +261,7 @@ export function TradePanel({
           onTradeSuccess?.();
         },
         onError: (err) => {
-          setTxError(err.message);
+          setTxError(simplifyError(err));
         },
       }
     );
@@ -287,7 +287,7 @@ export function TradePanel({
           onTradeSuccess?.();
         },
         onError: (err) => {
-          setTxError(err.message);
+          setTxError(simplifyError(err));
         },
       }
     );

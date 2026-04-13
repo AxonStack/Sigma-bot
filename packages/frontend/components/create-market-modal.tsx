@@ -10,6 +10,7 @@ import { baseSepolia } from "wagmi/chains";
 import {
   createMarketRequestEntry,
 } from "@/lib/market-request-store";
+import { simplifyError } from "@/lib/errors";
 
 function cleanEnv(value: string | undefined): string {
   return (value ?? "").trim();
@@ -130,16 +131,7 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
       onClose();
       router.push("/markets?scope=mine");
     } catch (err: unknown) {
-      const rawMessage = axios.isAxiosError(err)
-        ? err.response?.data?.message || err.message
-        : err instanceof Error
-          ? err.message
-          : "Process failed. Ensure you have USDC balance and approved the transaction.";
-      const message = rawMessage.includes("RPC endpoint returned too many errors")
-        || rawMessage.includes("Requested resource not available")
-        ? "Your wallet/provider could not broadcast the Base Sepolia payment. Retry in a moment, or switch your wallet/provider to a more reliable Base Sepolia RPC."
-        : rawMessage;
-      setError(message);
+      setError(simplifyError(err));
     } finally {
       setLoading(false);
       setPhase("");
