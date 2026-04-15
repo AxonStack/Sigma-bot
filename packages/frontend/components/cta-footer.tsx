@@ -29,7 +29,7 @@ export function CTAFooter() {
 
           <div className="flex flex-wrap items-center gap-3">
             <a
-              href="https://x.com/OpenBetRun"
+              href="https://x.com/openbettrade?s=21"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="X"
