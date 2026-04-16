@@ -4,6 +4,7 @@ Prediction market platform — frontend + backend in a single monorepo.
 
 ## Structure
 
+
 ```
 packages/
   frontend/   — Next.js 16 web app (React 19, RainbowKit, Wagmi)
