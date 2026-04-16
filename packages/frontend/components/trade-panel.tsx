@@ -7,7 +7,7 @@ import {
   useReadContract,
   useWriteContract,
 } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { ERC20_ABI, FACTORY_ABI } from "@/lib/abi/abi";
@@ -75,7 +75,7 @@ export function TradePanel({
     abi: factoryAbi,
     functionName: "getYesTokenId",
     args: [conditionId],
-    chainId: baseSepolia.id,
+    chainId: base.id,
   });
   const yesTokenId = rawYesTokenId as bigint | undefined;
 
@@ -84,7 +84,7 @@ export function TradePanel({
     abi: factoryAbi,
     functionName: "getNoTokenId",
     args: [conditionId],
-    chainId: baseSepolia.id,
+    chainId: base.id,
   });
   const noTokenId = rawNoTokenId as bigint | undefined;
 
@@ -93,7 +93,7 @@ export function TradePanel({
     abi: factoryAbi,
     functionName: "collateralToken",
     args: [conditionId],
-    chainId: baseSepolia.id,
+    chainId: base.id,
   });
   const collateralAddress = rawCollateralAddress as `0x${string}` | undefined;
 
@@ -101,7 +101,7 @@ export function TradePanel({
     address: collateralAddress,
     abi: erc20Abi,
     functionName: "decimals",
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: { enabled: !!collateralAddress },
   });
   const tokenDecimals = (rawDecimals as number) ?? 18;
@@ -131,7 +131,7 @@ export function TradePanel({
     abi: erc20Abi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: { enabled: !!collateralAddress && !!address },
   });
   const collateralBalance = rawCollateralBalance as bigint | undefined;
@@ -141,7 +141,7 @@ export function TradePanel({
     abi: factoryAbi,
     functionName: "balanceOf",
     args: address && yesTokenId != null ? [address, yesTokenId as bigint] : undefined,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: { enabled: !!address && yesTokenId != null },
   });
   const yesBalance = rawYesBalance as bigint | undefined;
@@ -151,7 +151,7 @@ export function TradePanel({
     abi: factoryAbi,
     functionName: "balanceOf",
     args: address && noTokenId != null ? [address, noTokenId as bigint] : undefined,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: { enabled: !!address && noTokenId != null },
   });
   const noBalance = rawNoBalance as bigint | undefined;
@@ -161,7 +161,7 @@ export function TradePanel({
     abi: erc20Abi,
     functionName: "allowance",
     args: address ? [address, FACTORY_ADDRESS] : undefined,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: { enabled: !!collateralAddress && !!address },
   });
   const allowance = rawAllowance as bigint | undefined;
@@ -171,7 +171,7 @@ export function TradePanel({
     abi: factoryAbi,
     functionName: "previewMint",
     args: tokenId != null && parsedAmount > BigInt(0) ? [conditionId, parsedAmount, tokenId] : undefined,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: { enabled: activeTab === "buy" && parsedAmount > BigInt(0) && tokenId != null },
   });
 
@@ -180,7 +180,7 @@ export function TradePanel({
     abi: factoryAbi,
     functionName: "previewBurn",
     args: tokenId != null && parsedAmount > BigInt(0) ? [conditionId, tokenId, parsedAmount] : undefined,
-    chainId: baseSepolia.id,
+    chainId: base.id,
     query: { enabled: activeTab === "sell" && parsedAmount > BigInt(0) && tokenId != null },
   });
 
@@ -230,7 +230,7 @@ export function TradePanel({
         abi: erc20Abi,
         functionName: "approve",
         args: [FACTORY_ADDRESS, parsedAmount * BigInt(10)],
-        chainId: baseSepolia.id,
+        chainId: base.id,
       },
       { 
         onSuccess: () => undefined,
@@ -253,7 +253,7 @@ export function TradePanel({
         abi: factoryAbi,
         functionName: "mintDecisionTokens",
         args: [conditionId, parsedAmount, tokenId, minTokens, deadline],
-        chainId: baseSepolia.id,
+        chainId: base.id,
       },
       {
         onSuccess: () => {
@@ -279,7 +279,7 @@ export function TradePanel({
         abi: factoryAbi,
         functionName: "burnDecisionTokens",
         args: [conditionId, tokenId, parsedAmount, minCollateral, deadline],
-        chainId: baseSepolia.id,
+        chainId: base.id,
       },
       {
         onSuccess: () => {

@@ -6,7 +6,7 @@ import { useAccount, useWalletClient } from "wagmi";
 import { encodeFunctionData, parseUnits } from "viem";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import {
   createMarketRequestEntry,
 } from "@/lib/market-request-store";
@@ -87,8 +87,8 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
       return;
     }
 
-    if (chainId !== baseSepolia.id) {
-      setError("Switch your wallet to Base Sepolia before submitting.");
+    if (chainId !== base.id) {
+      setError("Switch your wallet to Base Mainnet before submitting.");
       return;
     }
 
@@ -107,7 +107,7 @@ export function CreateMarketModal({ isOpen, onClose }: { isOpen: boolean; onClos
       setPhase("Confirming fee payment in wallet...");
       const paymentTxHash = await walletClient.sendTransaction({
         account: address,
-        chain: baseSepolia,
+        chain: base,
         to: USDC_ADDRESS,
         data: encodeFunctionData({
           abi: ERC20_TRANSFER_ABI,

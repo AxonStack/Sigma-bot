@@ -1,6 +1,6 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { fallback, http } from "viem";
-import { baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 
 const projectId =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim() ||
@@ -24,8 +24,8 @@ function getRpcUrls() {
   return Array.from(
     new Set([
       ...configured,
-      "https://sepolia.base.org",
-      "https://sepolia-preconf.base.org",
+      "https://mainnet.base.org",
+      "https://base-rpc.publicnode.com",
     ]),
   );
 }
@@ -33,10 +33,10 @@ function getRpcUrls() {
 export const config = getDefaultConfig({
   appName: "OpenBet",
   projectId,
-  chains: [baseSepolia],
+  chains: [base],
   ssr: true,
   transports: {
-    [baseSepolia.id]: fallback(
+    [base.id]: fallback(
       getRpcUrls().map((url) =>
         http(url, {
           retryCount: 2,

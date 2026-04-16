@@ -70,7 +70,7 @@ export class MarketPricesService implements OnModuleInit {
     this.logger.log(`Found ${allUniqueAddresses.length} markets to sync. Starting contract calls...`);
 
     try {
-      const provider = new JsonRpcProvider(rpcUrl, { chainId: 84532, name: 'base-sepolia' });
+      const provider = new JsonRpcProvider(rpcUrl, { chainId: 8453, name: 'base-mainnet' });
       const factory = new Contract(factoryAddress, PNP_FACTORY_ABI, provider);
 
       let updatedCount = 0;
