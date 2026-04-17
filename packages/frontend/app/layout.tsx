@@ -17,6 +17,9 @@ export const metadata: Metadata = {
       "Create, explore, and trade live prediction markets on Base with OpenBet.",
     type: "website",
   },
+  other: {
+    "base:app_id": "69e1d992f26f0c283cbfc12d",
+  },
 };
 
 export default function RootLayout({
