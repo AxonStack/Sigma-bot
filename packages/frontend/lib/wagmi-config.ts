@@ -1,6 +1,7 @@
-import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { fallback, http } from "viem";
+import { http, createConfig, createStorage, cookieStorage } from "wagmi";
 import { base } from "wagmi/chains";
+import { baseAccount, injected } from "wagmi/connectors";
+import { fallback } from "viem";
 
 const projectId =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim() ||
@@ -30,10 +31,15 @@ function getRpcUrls() {
   );
 }
 
-export const config = getDefaultConfig({
-  appName: "OpenBet",
-  projectId,
+export const config = createConfig({
   chains: [base],
+  connectors: [
+    injected(),
+    baseAccount({
+      appName: "OpenBet",
+    }),
+  ],
+  storage: createStorage({ storage: cookieStorage }),
   ssr: true,
   transports: {
     [base.id]: fallback(
@@ -47,3 +53,9 @@ export const config = getDefaultConfig({
     ),
   },
 });
+
+declare module "wagmi" {
+  interface Register {
+    config: typeof config;
+  }
+}
